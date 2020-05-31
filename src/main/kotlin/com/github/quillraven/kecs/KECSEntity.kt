@@ -4,8 +4,10 @@ import com.badlogic.gdx.utils.ObjectMap
 import com.badlogic.gdx.utils.Pool
 import kotlin.reflect.KClass
 
-data class KECSEntity(val manager: KECSManager) : Pool.Poolable {
-    private val componentsInternal = ObjectMap<KClass<out KECSComponent>, KECSComponent>()
+data class KECSEntity(
+    val manager: KECSManager,
+    private val componentsInternal: ObjectMap<KClass<out KECSComponent>, KECSComponent> = ObjectMap()
+) : Pool.Poolable {
     val components = ComponentMap(componentsInternal)
     val componentSize: Int get() = components.size
 

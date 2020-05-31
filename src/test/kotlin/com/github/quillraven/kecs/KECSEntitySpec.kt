@@ -62,5 +62,40 @@ object KECSEntitySpec : Spek({
                 invoking { entity.remove<TransformComponent>() } `should throw` KECSMissingComponentException::class
             }
         }
+
+        describe("comparing with other entities") {
+            lateinit var entity1: KECSEntity
+            lateinit var entity2: KECSEntity
+            lateinit var entity3: KECSEntity
+            beforeEachTest {
+                entity1 = manager.entity {
+                    add<TransformComponent> {
+                        position.set(1f, 1f)
+                    }
+                }
+                entity2 = manager.entity {
+                    add<TransformComponent> {
+                        position.set(0f, 0f)
+                    }
+                }
+                entity3 = manager.entity {
+                    add<TransformComponent> {
+                        position.set(1f, 1f)
+                    }
+                }
+            }
+
+            it("should return true when comparing against itself") {
+                (entity1 == entity1) `should be equal to` true
+            }
+
+            it("should return false when comparing against a different entity") {
+                (entity1 == entity2) `should be equal to` false
+            }
+
+            it("should return false when comparing against a different entity with the same component data") {
+                (entity1 == entity3) `should be equal to` false
+            }
+        }
     }
 })
