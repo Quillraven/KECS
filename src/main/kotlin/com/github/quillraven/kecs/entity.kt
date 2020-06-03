@@ -4,22 +4,42 @@ import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.Pool
 
 data class KECSEntity(
+    val manager: KECSManager,
     val id: Int,
     var active: Boolean
 ) : Pool.Poolable {
+    inline fun <reified T : KECSComponent> add(init: T.() -> (Unit) = {}): T {
+        val component = manager.componentManager.obtain<T>().apply { init() }
+        manager.componentManager.add(this, component)
+        return component
+    }
+
+    // slow version
+    operator fun contains(component: KECSComponent) = contains(manager.componentManager.mapper(component::class))
+
+    // fast version
+    operator fun contains(mapper: KECSComponentMapper) =
+        manager.componentManager.entityComponents[id][mapper.id] != null
+
     override fun reset() {
         active = false
     }
 }
 
-class KECSEntityPool(initialEntityCapacity: Int) : Pool<KECSEntity>(initialEntityCapacity) {
+class KECSEntityPool(
+    private val manager: KECSManager,
+    initialEntityCapacity: Int
+) : Pool<KECSEntity>(initialEntityCapacity) {
     var nextId = 0
 
-    override fun newObject(): KECSEntity = KECSEntity(nextId++, true)
+    override fun newObject(): KECSEntity = KECSEntity(manager, nextId++, true)
 }
 
-class KECSEntityManager(initialEntityCapacity: Int) {
-    val entityPool = KECSEntityPool(initialEntityCapacity)
+class KECSEntityManager(
+    manager: KECSManager,
+    initialEntityCapacity: Int
+) {
+    val entityPool = KECSEntityPool(manager, initialEntityCapacity)
     val entities = Array<KECSEntity>(false, initialEntityCapacity).apply {
         // fill array with null values to correctly set the size and to be able to call "set(index,value)"
         repeat(initialEntityCapacity) {

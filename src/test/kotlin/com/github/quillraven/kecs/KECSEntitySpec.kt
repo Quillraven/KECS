@@ -8,12 +8,13 @@ import org.spekframework.spek2.style.specification.describe
 @Suppress("UNUSED")
 object KECSEntitySpec : Spek({
     describe("An EntityManager") {
-        val manager by memoized { KECSEntityManager(2) }
+        val manager by memoized { KECSManager(2, 0) }
+        val entityManager by memoized { manager.entityManager }
 
         describe("creating a new entity in an empty manager") {
             lateinit var entity: KECSEntity
             beforeEachTest {
-                entity = manager.obtain()
+                entity = entityManager.obtain()
             }
 
             it("should create an entity with id 0") {
@@ -25,19 +26,19 @@ object KECSEntitySpec : Spek({
             }
 
             it("should store the entity in the manager") {
-                (entity in manager) `should be equal to` true
+                (entity in entityManager) `should be equal to` true
             }
 
             it("should increase the entity pool's next id") {
-                manager.entityPool.nextId `should be equal to` 1
+                entityManager.entityPool.nextId `should be equal to` 1
             }
         }
 
         describe("removing an existing entity from a manager") {
             lateinit var entity: KECSEntity
             beforeEachTest {
-                entity = manager.obtain()
-                manager.free(entity)
+                entity = entityManager.obtain()
+                entityManager.free(entity)
             }
 
             it("should set the active flag of the entity to false") {
@@ -45,11 +46,11 @@ object KECSEntitySpec : Spek({
             }
 
             it("should remove the entity from the manager") {
-                (entity in manager) `should be equal to` false
+                (entity in entityManager) `should be equal to` false
             }
 
             it("should add the entity to the free objects of the entity pool") {
-                manager.entityPool.free `should be equal to` 1
+                entityManager.entityPool.free `should be equal to` 1
             }
         }
 
@@ -58,16 +59,16 @@ object KECSEntitySpec : Spek({
             beforeEachTest {
                 entities.clear()
                 repeat(3) {
-                    entities.add(manager.obtain())
+                    entities.add(entityManager.obtain())
                 }
             }
 
             it("should increase the maximum amount of possible entities by 75% (=3)") {
-                manager.entities.size `should be equal to` 3
+                entityManager.entities.size `should be equal to` 3
             }
 
             it("should contain all three entities") {
-                entities.forEach { (it in manager) `should be equal to` true }
+                entities.forEach { (it in entityManager) `should be equal to` true }
             }
         }
 
@@ -76,12 +77,12 @@ object KECSEntitySpec : Spek({
             var recycleId = -1
             var nextId = -1
             beforeEachTest {
-                entity = manager.obtain()
-                manager.obtain()
+                entity = entityManager.obtain()
+                entityManager.obtain()
                 recycleId = entity.id
-                nextId = manager.entityPool.nextId
-                manager.free(entity)
-                entity = manager.obtain()
+                nextId = entityManager.entityPool.nextId
+                entityManager.free(entity)
+                entity = entityManager.obtain()
             }
 
             it("should reuse an existing entity from the entity pool") {
@@ -93,12 +94,12 @@ object KECSEntitySpec : Spek({
             }
 
             it("should add the entity to the manager") {
-                manager.entities.size `should be equal to` 2
-                (entity in manager) `should be equal to` true
+                entityManager.entities.size `should be equal to` 2
+                (entity in entityManager) `should be equal to` true
             }
 
             it("should not touch the entity's pool nextId") {
-                manager.entityPool.nextId `should be equal to` nextId
+                entityManager.entityPool.nextId `should be equal to` nextId
             }
         }
     }

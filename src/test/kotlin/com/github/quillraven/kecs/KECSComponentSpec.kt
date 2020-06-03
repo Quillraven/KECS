@@ -13,8 +13,9 @@ import org.spekframework.spek2.style.specification.describe
 @Suppress("UNUSED")
 object KECSComponentSpec : Spek({
     describe("A ComponentManager") {
-        val entityManager by memoized { KECSEntityManager(1) }
-        val componentManager by memoized { KECSComponentManager(1, 2) }
+        val manager by memoized { KECSManager(1, 2) }
+        val componentManager by memoized { manager.componentManager }
+        val entityManager by memoized { manager.entityManager }
 
         describe("creating a new component in an empty manager") {
             lateinit var component: KECSComponent
