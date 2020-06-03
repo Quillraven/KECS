@@ -9,6 +9,12 @@ class KECSManager(
 ) {
     private val entityManager = KECSEntityManager(this, initialEntityCapacity)
     private val componentManager = KECSComponentManager(initialEntityCapacity, initialComponentCapacity)
+    private val familyManager = KECSFamilyManager()
+
+    private val allOfDSL = Array<KECSComponentMapper>()
+    private val noneOfDSL = Array<KECSComponentMapper>()
+    private val anyOfDSL = Array<KECSComponentMapper>()
+    private val familyDSL = KECSFamilyDSL(allOfDSL, noneOfDSL, anyOfDSL, componentManager)
 
     fun entity(init: KECSEntity.() -> Unit = {}) = entityManager.obtain().apply { init() }
 
@@ -22,4 +28,11 @@ class KECSManager(
     fun componentsOf(entity: KECSEntity): Array<KECSComponent> = componentManager.entityComponents[entity.id]
 
     fun mapper(type: KClass<out KECSComponent>) = componentManager.mapper(type)
+
+    fun family(init: KECSFamilyDSL.() -> Unit): KECSFamily {
+        familyDSL.run {
+            init()
+            return familyManager.family(allOfDSL, noneOfDSL, anyOfDSL, entityManager.entities.size)
+        }
+    }
 }

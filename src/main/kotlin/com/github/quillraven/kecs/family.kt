@@ -3,6 +3,30 @@ package com.github.quillraven.kecs
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.ObjectMap
 import java.util.*
+import kotlin.reflect.KClass
+
+class KECSFamilyDSL(
+    private val allMappers: Array<KECSComponentMapper>,
+    private val noneMappers: Array<KECSComponentMapper>,
+    private val anyMappers: Array<KECSComponentMapper>,
+    private val componentManager: KECSComponentManager
+) {
+
+    fun allOf(vararg types: KClass<out KECSComponent>) {
+        allMappers.clear()
+        types.forEach { allMappers.add(componentManager.mapper(it)) }
+    }
+
+    fun noneOf(vararg types: KClass<out KECSComponent>) {
+        noneMappers.clear()
+        types.forEach { noneMappers.add(componentManager.mapper(it)) }
+    }
+
+    fun anyOf(vararg types: KClass<out KECSComponent>) {
+        anyMappers.clear()
+        types.forEach { anyMappers.add(componentManager.mapper(it)) }
+    }
+}
 
 data class KECSFamily(
     val allSet: BitSet,

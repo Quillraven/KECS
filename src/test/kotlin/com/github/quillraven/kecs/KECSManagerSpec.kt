@@ -1,6 +1,8 @@
 package com.github.quillraven.kecs
 
 import com.badlogic.gdx.math.Vector2
+import com.github.quillraven.kecs.component.PhysicComponent
+import com.github.quillraven.kecs.component.PlayerComponent
 import com.github.quillraven.kecs.component.RemoveComponent
 import com.github.quillraven.kecs.component.TransformComponent
 import org.amshove.kluent.`should be equal to`
@@ -12,7 +14,7 @@ object KECSManagerSpec : Spek({
     describe("A KECS Manager") {
         val manager by memoized { KECSManager() }
 
-        describe("Creating an entity without components") {
+        describe("creating an entity without components") {
             lateinit var entity: KECSEntity
             beforeEachTest {
                 entity = manager.entity()
@@ -37,7 +39,7 @@ object KECSManagerSpec : Spek({
             }
         }
 
-        describe("Creating an entity with two components using an init block for one component") {
+        describe("creating an entity with two components using an init block for one component") {
             lateinit var entity: KECSEntity
             lateinit var transformComponent: TransformComponent
             lateinit var removeComponent: RemoveComponent
@@ -57,6 +59,23 @@ object KECSManagerSpec : Spek({
 
             it("should set the values of one component to the init block properties") {
                 transformComponent.position `should be equal to` Vector2(1f, 1f)
+            }
+        }
+
+        describe("creating a family using an init block") {
+            lateinit var family: KECSFamily
+            beforeEachTest {
+                family = manager.family {
+                    allOf(PhysicComponent::class, PlayerComponent::class)
+                    noneOf(RemoveComponent::class)
+                    anyOf(TransformComponent::class)
+                }
+            }
+
+            it("should create a family with the properties of the init block") {
+                family.allSet.cardinality() `should be equal to` 2
+                family.noneSet.cardinality() `should be equal to` 1
+                family.anySet.cardinality() `should be equal to` 1
             }
         }
     }
