@@ -27,13 +27,13 @@ object KECSManagerSpec : Spek({
             }
 
             it("should create a new entity without components") {
-                manager.componentManager.entityComponents[entity.id].forEach {
+                manager.componentsOf(entity).forEach {
                     it `should be equal to` null
                 }
             }
 
             it("should add the entity to the entity manager") {
-                (entity in manager.entityManager) `should be equal to` true
+                (entity in manager) `should be equal to` true
             }
         }
 

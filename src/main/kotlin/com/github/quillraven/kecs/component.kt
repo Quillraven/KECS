@@ -32,12 +32,13 @@ class KECSComponentManager(
     }
     val componentMappers = IdentityMap<KClass<out KECSComponent>, KECSComponentMapper>()
 
-    inline fun <reified T : KECSComponent> obtain(): T {
-        val type = T::class
+    inline fun <reified T : KECSComponent> obtain(): T = obtain(T::class) as T
+
+    fun <T : KECSComponent> obtain(type: KClass<T>): KECSComponent {
         if (!componentPools.containsKey(type)) {
             componentPools.put(type, ReflectionPool(type.java))
         }
-        return componentPools[type].obtain() as T
+        return componentPools[type].obtain()
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -9,7 +9,7 @@ import org.spekframework.spek2.style.specification.describe
 object KECSEntitySpec : Spek({
     describe("An EntityManager") {
         val manager by memoized { KECSManager(2, 0) }
-        val entityManager by memoized { manager.entityManager }
+        val entityManager by memoized { KECSEntityManager(manager, 2) }
 
         describe("creating a new entity in an empty manager") {
             lateinit var entity: KECSEntity

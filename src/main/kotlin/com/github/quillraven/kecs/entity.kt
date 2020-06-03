@@ -8,18 +8,15 @@ data class KECSEntity(
     val id: Int,
     var active: Boolean
 ) : Pool.Poolable {
-    inline fun <reified T : KECSComponent> add(init: T.() -> (Unit) = {}): T {
-        val component = manager.componentManager.obtain<T>().apply { init() }
-        manager.componentManager.add(this, component)
-        return component
-    }
+    inline fun <reified T : KECSComponent> add(init: T.() -> (Unit) = {}): T =
+        manager.componentFor<T>(this).apply { init() }
 
     // slow version
-    operator fun contains(component: KECSComponent) = contains(manager.componentManager.mapper(component::class))
+    operator fun contains(component: KECSComponent) = contains(manager.mapper(component::class))
 
     // fast version
     operator fun contains(mapper: KECSComponentMapper) =
-        manager.componentManager.entityComponents[id][mapper.id] != null
+        manager.componentsOf(this)[mapper.id] != null
 
     override fun reset() {
         active = false
