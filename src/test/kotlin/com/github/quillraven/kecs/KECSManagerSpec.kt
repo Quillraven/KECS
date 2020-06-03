@@ -37,7 +37,7 @@ object KECSManagerSpec : Spek({
             }
         }
 
-        describe("Creating an entity with two components using and init block for one component") {
+        describe("Creating an entity with two components using an init block for one component") {
             lateinit var entity: KECSEntity
             lateinit var transformComponent: TransformComponent
             lateinit var removeComponent: RemoveComponent
