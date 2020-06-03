@@ -35,15 +35,9 @@ object KECSEntitySpec : Spek({
 
         describe("removing an existing entity from a manager") {
             lateinit var entity: KECSEntity
-            var entityId: Int = -1
             beforeEachTest {
                 entity = manager.obtain()
-                entityId = entity.id
                 manager.free(entity)
-            }
-
-            it("should set the entity's id to -1") {
-                entity.id `should be equal to` -1
             }
 
             it("should set the active flag of the entity to false") {
@@ -52,11 +46,6 @@ object KECSEntitySpec : Spek({
 
             it("should remove the entity from the manager") {
                 (entity in manager) `should be equal to` false
-            }
-
-            it("should add the entity's id to the recycle ids of the entity pool") {
-                manager.entityPool.recycledIds.size `should be equal to` 1
-                manager.entityPool.recycledIds.contains(entityId)
             }
 
             it("should add the entity to the free objects of the entity pool") {
@@ -79,6 +68,37 @@ object KECSEntitySpec : Spek({
 
             it("should contain all three entities") {
                 entities.forEach { (it in manager) `should be equal to` true }
+            }
+        }
+
+        describe("creating a new entity with a non-empty entity pool") {
+            lateinit var entity: KECSEntity
+            var recycleId = -1
+            var nextId = -1
+            beforeEachTest {
+                entity = manager.obtain()
+                manager.obtain()
+                recycleId = entity.id
+                nextId = manager.entityPool.nextId
+                manager.free(entity)
+                entity = manager.obtain()
+            }
+
+            it("should reuse an existing entity from the entity pool") {
+                entity.id `should be equal to` recycleId
+            }
+
+            it("should set the active flag of the entity to true") {
+                entity.active `should be equal to` true
+            }
+
+            it("should add the entity to the manager") {
+                manager.entities.size `should be equal to` 2
+                (entity in manager) `should be equal to` true
+            }
+
+            it("should not touch the entity's pool nextId") {
+                manager.entityPool.nextId `should be equal to` nextId
             }
         }
     }

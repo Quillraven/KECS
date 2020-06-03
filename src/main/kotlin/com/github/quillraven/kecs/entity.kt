@@ -1,35 +1,21 @@
 package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
-import com.badlogic.gdx.utils.IntArray
 import com.badlogic.gdx.utils.Pool
 
 data class KECSEntity(
-    var id: Int,
+    val id: Int,
     var active: Boolean
 ) : Pool.Poolable {
     override fun reset() {
-        id = -1
         active = false
     }
 }
 
 class KECSEntityPool(initialEntityCapacity: Int) : Pool<KECSEntity>(initialEntityCapacity) {
-    val recycledIds = IntArray(false, 32)
     var nextId = 0
 
-    override fun newObject(): KECSEntity {
-        return if (recycledIds.isEmpty) {
-            KECSEntity(nextId++, true)
-        } else {
-            KECSEntity(recycledIds.pop(), true)
-        }
-    }
-
-    override fun reset(entity: KECSEntity) {
-        recycledIds.add(entity.id)
-        super.reset(entity)
-    }
+    override fun newObject(): KECSEntity = KECSEntity(nextId++, true)
 }
 
 class KECSEntityManager(initialEntityCapacity: Int) {
@@ -42,7 +28,7 @@ class KECSEntityManager(initialEntityCapacity: Int) {
     }
 
     fun obtain(): KECSEntity {
-        val entity = entityPool.obtain()
+        val entity = entityPool.obtain().apply { active = true }
         if (entity.id >= entities.size) {
             // entity array is not big enough to store the new entity
             // -> resize by 75% and fill it up again with null values
@@ -59,5 +45,5 @@ class KECSEntityManager(initialEntityCapacity: Int) {
         entityPool.free(entity)
     }
 
-    operator fun contains(entity: KECSEntity) = entity.id >= 0 && entities[entity.id] == entity
+    operator fun contains(entity: KECSEntity) = entities[entity.id] == entity
 }
