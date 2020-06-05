@@ -9,6 +9,7 @@ import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.util.*
 
 @Suppress("UNUSED")
 object KECSComponentSpec : Spek({
@@ -69,6 +70,11 @@ object KECSComponentSpec : Spek({
                 val mapper = componentManager.componentMappers[TransformComponent::class]
                 componentManager.entityComponents[entity.id][mapper.id] `should be equal to` component
             }
+
+            it("should set the component's bit to the entity's component bitset") {
+                val mapper = componentManager.componentMappers[TransformComponent::class]
+                componentManager.entityComponentBits[entity.id].get(mapper.id) `should be equal to` true
+            }
         }
 
         describe("adding a component of the same type twice to an entity without mapper") {
@@ -115,6 +121,15 @@ object KECSComponentSpec : Spek({
                 val mapperPlayer = componentManager.componentMappers[PlayerComponent::class]
                 componentManager.entityComponents[entity.id][mapperPlayer.id] `should be equal to` player
             }
+
+            it("should set the components' bits to the entity's component bitset") {
+                val mapperTransform = componentManager.componentMappers[TransformComponent::class]
+                componentManager.entityComponentBits[entity.id].get(mapperTransform.id) `should be equal to` true
+                val mapperRemove = componentManager.componentMappers[RemoveComponent::class]
+                componentManager.entityComponentBits[entity.id].get(mapperRemove.id) `should be equal to` true
+                val mapperPlayer = componentManager.componentMappers[PlayerComponent::class]
+                componentManager.entityComponentBits[entity.id].get(mapperPlayer.id) `should be equal to` true
+            }
         }
 
         describe("removing a component from an entity without mapper") {
@@ -140,6 +155,11 @@ object KECSComponentSpec : Spek({
 
             it("should reset the component") {
                 component.position `should be equal to` Vector2(0f, 0f)
+            }
+
+            it("should clear the component's bit from the entity's component bitset") {
+                val mapper = componentManager.componentMappers[TransformComponent::class]
+                componentManager.entityComponentBits[entity.id].get(mapper.id) `should be equal to` false
             }
         }
 
@@ -192,6 +212,44 @@ object KECSComponentSpec : Spek({
 
             it("should throw a KECSMissingComponentException") {
                 invoking { componentManager.get(entity, mapper) } `should throw` KECSMissingComponentException::class
+            }
+        }
+
+        describe("getting a component bitset from an entity without components") {
+            lateinit var entity: KECSEntity
+            beforeEachTest {
+                entityManager.addListener(componentManager)
+                entity = entityManager.obtain()
+            }
+
+            it("should return an empty BitSet") {
+                componentManager.entityComponentBits[entity.id] `should be equal to` BitSet()
+            }
+        }
+
+        describe("removing an entity with two components") {
+            lateinit var entity: KECSEntity
+            lateinit var transformComponent: TransformComponent
+            lateinit var playerComponent: PlayerComponent
+            beforeEachTest {
+                entityManager.addListener(componentManager)
+                entity = entityManager.obtain()
+                transformComponent = componentManager.obtain<TransformComponent>().apply {
+                    position.set(1f, 1f)
+                }
+                playerComponent = componentManager.obtain()
+                componentManager.add(entity, transformComponent)
+                componentManager.add(entity, playerComponent)
+                entityManager.free(entity)
+            }
+
+            it("should free the entity's components") {
+                componentManager.entityComponents[entity.id].forEach { it `should be equal to` null }
+                transformComponent.position `should be equal to` Vector2(0f, 0f)
+            }
+
+            it("should clear the component bits of the entity") {
+                componentManager.entityComponentBits[entity.id] `should be equal to` BitSet()
             }
         }
     }

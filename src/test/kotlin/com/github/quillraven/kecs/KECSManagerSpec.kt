@@ -8,11 +8,12 @@ import com.github.quillraven.kecs.component.TransformComponent
 import org.amshove.kluent.`should be equal to`
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.util.*
 
 @Suppress("UNUSED")
 object KECSManagerSpec : Spek({
     describe("A KECS Manager") {
-        val manager by memoized { KECSManager() }
+        val manager by memoized { KECSManager(1) }
 
         describe("creating an entity without components") {
             lateinit var entity: KECSEntity
@@ -76,6 +77,80 @@ object KECSManagerSpec : Spek({
                 family.allSet.cardinality() `should be equal to` 2
                 family.noneSet.cardinality() `should be equal to` 1
                 family.anySet.cardinality() `should be equal to` 1
+            }
+        }
+
+        describe("getting components from an entity without components") {
+            lateinit var entity: KECSEntity
+            beforeEachTest {
+                entity = manager.entity()
+            }
+
+            it("should return an Array of nulls for components") {
+                manager.componentsOf(entity).forEach { it `should be equal to` null }
+            }
+
+            it("should return an empty BitSet for the entity's bitset") {
+                manager.componentBitsOf(entity) `should be equal to` BitSet()
+            }
+        }
+
+        describe("getting components from an entity that exceeded the initial entity capacity (=1) of the manager") {
+            lateinit var entity: KECSEntity
+            lateinit var transformComponent: TransformComponent
+            lateinit var removeComponent: RemoveComponent
+            beforeEachTest {
+                manager.entity()
+                entity = manager.entity {
+                    transformComponent = add {
+                        position.set(1f, 1f)
+                    }
+                    removeComponent = add()
+                }
+            }
+
+            it("should add the components to the entity") {
+                (transformComponent in entity) `should be equal to` true
+                (removeComponent in entity) `should be equal to` true
+            }
+        }
+
+        describe("getting components from an entity without components that exceeded the initial entity capacity (=1) of the manager") {
+            lateinit var entity: KECSEntity
+            beforeEachTest {
+                manager.entity()
+                entity = manager.entity()
+            }
+
+            it("should return an Array of nulls for components") {
+                manager.componentsOf(entity).forEach { it `should be equal to` null }
+            }
+
+            it("should return an empty BitSet for the entity's bitset") {
+                manager.componentBitsOf(entity) `should be equal to` BitSet()
+            }
+        }
+
+        describe("removing an entity with two components") {
+            lateinit var entity: KECSEntity
+            lateinit var transformComponent: TransformComponent
+            beforeEachTest {
+                entity = manager.entity {
+                    transformComponent = add {
+                        position.set(1f, 1f)
+                    }
+                    add<PlayerComponent>()
+                }
+                entity.free()
+            }
+
+            it("should free the entity's components") {
+                manager.componentsOf(entity).forEach { it `should be equal to` null }
+                transformComponent.position `should be equal to` Vector2(0f, 0f)
+            }
+
+            it("should clear the component bits of the entity") {
+                manager.componentBitsOf(entity) `should be equal to` BitSet()
             }
         }
     }
