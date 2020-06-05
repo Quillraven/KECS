@@ -58,6 +58,8 @@ data class KECSFamily(
 
         return true
     }
+
+    operator fun contains(entity: KECSEntity) = contains(entity.componentBits)
 }
 
 class KECSFamilyManager {
