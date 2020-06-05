@@ -4,6 +4,8 @@ import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.IdentityMap
 import com.badlogic.gdx.utils.Pool
 import com.badlogic.gdx.utils.ReflectionPool
+import java.util.*
+import kotlin.math.max
 import kotlin.reflect.KClass
 
 /**
@@ -18,7 +20,7 @@ data class KECSComponentMapper(val id: Int, val type: KClass<out KECSComponent>)
 class KECSComponentManager(
     initialEntityCapacity: Int,
     initialComponentCapacity: Int
-) {
+) : KECSEntityListener {
     val componentPools = IdentityMap<KClass<out KECSComponent>, ReflectionPool<out KECSComponent>>()
     val entityComponents = Array<Array<KECSComponent>>(false, initialEntityCapacity).apply {
         // fill array with null values to correctly set the size and to be able to call "set(index,value)"
@@ -28,6 +30,12 @@ class KECSComponentManager(
             repeat(initialComponentCapacity) {
                 components.add(null)
             }
+        }
+    }
+    val entityComponentBits = Array<BitSet>(false, initialEntityCapacity).apply {
+        // fill array with null values to correctly set the size and to be able to call "set(index,value)"
+        repeat(initialEntityCapacity) {
+            this.add(null)
         }
     }
     val componentMappers = IdentityMap<KClass<out KECSComponent>, KECSComponentMapper>()
@@ -66,13 +74,18 @@ class KECSComponentManager(
         if (mapper.id >= components.size) {
             // component array is not big enough to store the new component
             // -> resize by 75% and fill it up again with null values
-            repeat((components.size * 0.75f).toInt()) {
+            repeat(max(1, (components.size * 0.75f).toInt())) {
                 components.add(null)
+                entityComponentBits.add(null)
             }
         }
 
         if (components.get(mapper.id) == null) {
             components.set(mapper.id, component)
+            if (entityComponentBits[entity.id] == null) {
+                entityComponentBits[entity.id] = BitSet()
+            }
+            entityComponentBits[entity.id].set(mapper.id)
         } else {
             throw KECSComponentAlreadyExistingException(entity, mapper.type)
         }
@@ -85,6 +98,7 @@ class KECSComponentManager(
     private fun remove(entity: KECSEntity, mapper: KECSComponentMapper, component: KECSComponent) {
         entityComponents[entity.id].set(mapper.id, null)
         free(component)
+        entityComponentBits[entity.id].clear(mapper.id)
     }
 
     // slow version
@@ -97,6 +111,32 @@ class KECSComponentManager(
             return entityComponents[entity.id][mapper.id] as T
         } else {
             throw KECSMissingComponentException(entity, mapper.type)
+        }
+    }
+
+    override fun entityAdded(entity: KECSEntity) {
+        entityComponentBits[entity.id] = BitSet()
+    }
+
+    override fun entityRemoved(entity: KECSEntity) {
+        entityComponents[entity.id].forEachIndexed { index, component ->
+            if (component != null) {
+                free(component)
+            }
+            entityComponents[entity.id].set(index, null)
+        }
+        entityComponentBits[entity.id].clear()
+    }
+
+    override fun entityResize(newSize: Int) {
+        repeat(newSize - entityComponents.size) {
+            val size = entityComponents[0].size
+            val components = Array<KECSComponent>(false, size)
+            entityComponents.add(components)
+            repeat(size) {
+                components.add(null)
+            }
+            entityComponentBits.add(null)
         }
     }
 }
