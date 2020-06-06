@@ -69,7 +69,7 @@ class KECSComponentManager(
     fun add(entity: KECSEntity, component: KECSComponent) = add(entity, mapper(component), component)
 
     // fast version
-    private fun add(entity: KECSEntity, mapper: KECSComponentMapper, component: KECSComponent) {
+    fun add(entity: KECSEntity, mapper: KECSComponentMapper, component: KECSComponent) {
         val components = entityComponents[entity.id]
         if (mapper.id >= components.size) {
             // component array is not big enough to store the new component
@@ -109,6 +109,20 @@ class KECSComponentManager(
         val component = entityComponents[entity.id][mapper.id]
         if (component != null) {
             return entityComponents[entity.id][mapper.id] as T
+        } else {
+            throw KECSMissingComponentException(entity, mapper.type)
+        }
+    }
+
+    // fast version --> this version is only needed for EntityUpdateDSL
+    fun <T : KECSComponent> get(type: KClass<T>, entity: KECSEntity, mapper: KECSComponentMapper): KECSComponent {
+        if (type != mapper.type) {
+            throw ClassCastException("Cannot cast component mapper type ${mapper.type} to $type")
+        }
+
+        val component = entityComponents[entity.id][mapper.id]
+        if (component != null) {
+            return entityComponents[entity.id][mapper.id]
         } else {
             throw KECSMissingComponentException(entity, mapper.type)
         }

@@ -17,7 +17,7 @@ object KECSFamilySpec : Spek({
         val manager by memoized { KECSManager(1, 3) }
         val componentManager by memoized { KECSComponentManager(1, 3) }
         val familyManager by memoized { KECSFamilyManager(componentManager) }
-        val entityManager by memoized { KECSEntityManager(manager, 1) }
+        val entityManager by memoized { KECSEntityManager(componentManager, 1) }
 
         describe("creating a new family in an empty manager") {
             val all = Array<KECSComponentMapper>()
@@ -151,8 +151,8 @@ object KECSFamilySpec : Spek({
                 all.add(transformMapper, physiqueMapper)
                 family = familyManager.family(all, initialEntityCapacity = 1)
                 entityAll = manager.entity {
-                    add<PhysicComponent>()
-                    add<TransformComponent>()
+                    with<PhysicComponent>()
+                    with<TransformComponent>()
                 }
                 entityNone = manager.entity()
             }
@@ -179,10 +179,11 @@ object KECSFamilySpec : Spek({
                 val physiqueMapper = componentManager.mapper<PhysicComponent>()
                 all.add(transformMapper, physiqueMapper)
                 family = familyManager.family(all, initialEntityCapacity = 1)
-                entityAll = entityManager.obtain {
-                    componentManager.add(this, componentManager.obtain<PhysicComponent>())
-                    componentManager.add(this, componentManager.obtain<TransformComponent>())
+                val components = Array<KECSComponent>().apply {
+                    add(componentManager.obtain<PhysicComponent>())
+                    add(componentManager.obtain<TransformComponent>())
                 }
+                entityAll = entityManager.obtain(components)
                 entityNone = entityManager.obtain()
             }
 

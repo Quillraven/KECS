@@ -30,9 +30,7 @@ object KECSManagerSpec : Spek({
             }
 
             it("should create a new entity without components") {
-                manager.componentsOf(entity).forEach {
-                    it `should be equal to` null
-                }
+                entity.components.forEach { it `should be equal to` null }
             }
 
             it("should add the entity to the entity manager") {
@@ -46,10 +44,10 @@ object KECSManagerSpec : Spek({
             lateinit var removeComponent: RemoveComponent
             beforeEachTest {
                 entity = manager.entity {
-                    transformComponent = add {
+                    transformComponent = with {
                         position.set(1f, 1f)
                     }
-                    removeComponent = add()
+                    removeComponent = with()
                 }
             }
 
@@ -95,11 +93,11 @@ object KECSManagerSpec : Spek({
             }
 
             it("should return an Array of nulls for components") {
-                manager.componentsOf(entity).forEach { it `should be equal to` null }
+                entity.components.forEach { it `should be equal to` null }
             }
 
             it("should return an empty BitSet for the entity's bitset") {
-                manager.componentBitsOf(entity) `should be equal to` BitSet()
+                entity.componentBits `should be equal to` BitSet()
             }
         }
 
@@ -110,10 +108,10 @@ object KECSManagerSpec : Spek({
             beforeEachTest {
                 manager.entity()
                 entity = manager.entity {
-                    transformComponent = add {
+                    transformComponent = with {
                         position.set(1f, 1f)
                     }
-                    removeComponent = add()
+                    removeComponent = with()
                 }
             }
 
@@ -131,11 +129,11 @@ object KECSManagerSpec : Spek({
             }
 
             it("should return an Array of nulls for components") {
-                manager.componentsOf(entity).forEach { it `should be equal to` null }
+                entity.components.forEach { it `should be equal to` null }
             }
 
             it("should return an empty BitSet for the entity's bitset") {
-                manager.componentBitsOf(entity) `should be equal to` BitSet()
+                entity.componentBits `should be equal to` BitSet()
             }
         }
 
@@ -144,21 +142,32 @@ object KECSManagerSpec : Spek({
             lateinit var transformComponent: TransformComponent
             beforeEachTest {
                 entity = manager.entity {
-                    transformComponent = add {
+                    transformComponent = with {
                         position.set(1f, 1f)
                     }
-                    add<PlayerComponent>()
+                    with<PlayerComponent>()
                 }
                 entity.free()
             }
 
             it("should free the entity's components") {
-                manager.componentsOf(entity).forEach { it `should be equal to` null }
+                entity.components.forEach { it `should be equal to` null }
                 transformComponent.position `should be equal to` Vector2(0f, 0f)
             }
 
             it("should clear the component bits of the entity") {
-                manager.componentBitsOf(entity) `should be equal to` BitSet()
+                entity.componentBits `should be equal to` BitSet()
+            }
+        }
+
+        describe("creating a component mapper") {
+            lateinit var mapper: KECSComponentMapper
+            beforeEachTest {
+                mapper = manager.mapper<TransformComponent>()
+            }
+
+            it("should return a new component mapper of the given type") {
+                mapper.type `should be equal to` TransformComponent::class
             }
         }
     }

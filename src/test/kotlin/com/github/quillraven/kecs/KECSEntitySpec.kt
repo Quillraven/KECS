@@ -1,6 +1,10 @@
 package com.github.quillraven.kecs
 
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Array
+import com.github.quillraven.kecs.component.PhysicComponent
+import com.github.quillraven.kecs.component.PlayerComponent
+import com.github.quillraven.kecs.component.TransformComponent
 import org.amshove.kluent.`should be equal to`
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -8,8 +12,8 @@ import org.spekframework.spek2.style.specification.describe
 @Suppress("UNUSED")
 object KECSEntitySpec : Spek({
     describe("An EntityManager") {
-        val manager by memoized { KECSManager(2, 0) }
-        val entityManager by memoized { KECSEntityManager(manager, 2) }
+        val componentManager by memoized { KECSComponentManager(2, 2) }
+        val entityManager by memoized { KECSEntityManager(componentManager, 2) }
 
         describe("creating a new entity in an empty manager") {
             lateinit var entity: KECSEntity
@@ -100,6 +104,68 @@ object KECSEntitySpec : Spek({
 
             it("should not touch the entity's pool nextId") {
                 entityManager.entityPool.nextId `should be equal to` nextId
+            }
+        }
+
+        describe("updating the components of an entity by adding two components using an init block once") {
+            lateinit var entity: KECSEntity
+            lateinit var transformComponent: TransformComponent
+            lateinit var playerComponent: PlayerComponent
+            beforeEachTest {
+                entity = entityManager.obtain()
+                val mapper = componentManager.mapper<PlayerComponent>()
+                entity.updateEntity {
+                    playerComponent = add(mapper)
+                    transformComponent = add {
+                        position.set(1f, 1f)
+                    }
+                }
+            }
+
+            it("should add the component and set the init block properties") {
+                (transformComponent in entity) `should be equal to` true
+                transformComponent.position `should be equal to` Vector2(1f, 1f)
+            }
+
+            it("should add the component without the init block") {
+                (playerComponent in entity) `should be equal to` true
+            }
+        }
+
+        describe("updating the components of an entity by removing existing components") {
+            lateinit var entity: KECSEntity
+            lateinit var transformComponent: TransformComponent
+            lateinit var playerComponent: PlayerComponent
+            lateinit var physiqueComponent: PhysicComponent
+            beforeEachTest {
+                entity = entityManager.obtain()
+                entity.updateEntity {
+                    transformComponent = add {
+                        position.set(1f, 1f)
+                    }
+                    remove<TransformComponent>()
+                    playerComponent = add()
+                    remove(playerComponent)
+                    physiqueComponent = add()
+                    val mapper = componentManager.mapper<PhysicComponent>()
+                    remove<PhysicComponent>(mapper)
+                }
+            }
+
+            it("should remove the transform component") {
+                (transformComponent in entity) `should be equal to` false
+            }
+
+            it("should reset the transform component") {
+                transformComponent.position `should be equal to` Vector2(0f, 0f)
+            }
+
+            it("should remove the player component") {
+                (playerComponent in entity) `should be equal to` false
+            }
+
+            it("should remove the physique component") {
+                (physiqueComponent in entity) `should be equal to` false
             }
         }
     }
