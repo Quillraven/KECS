@@ -12,14 +12,16 @@ class KECSManager(
     private val componentManager = KECSComponentManager(initialEntityCapacity, initialComponentCapacity).apply {
         entityManager.addListener(this)
     }
-    private val familyManager = KECSFamilyManager()
+    private val familyManager = KECSFamilyManager(componentManager).apply {
+        entityManager.addListener(this)
+    }
 
     private val allOfDSL = Array<KECSComponentMapper>()
     private val noneOfDSL = Array<KECSComponentMapper>()
     private val anyOfDSL = Array<KECSComponentMapper>()
     private val familyDSL = KECSFamilyDSL(allOfDSL, noneOfDSL, anyOfDSL, componentManager)
 
-    fun entity(init: KECSEntity.() -> Unit = {}) = entityManager.obtain().apply { init() }
+    fun entity(init: KECSEntity.() -> Unit = {}) = entityManager.obtain(init)
 
     fun free(entity: KECSEntity) = entityManager.free(entity)
 

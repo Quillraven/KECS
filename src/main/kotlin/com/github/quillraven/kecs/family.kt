@@ -2,6 +2,7 @@ package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.ObjectMap
+import com.badlogic.gdx.utils.ObjectSet
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -62,9 +63,9 @@ data class KECSFamily(
     operator fun contains(entity: KECSEntity) = contains(entity.componentBits)
 }
 
-class KECSFamilyManager {
+class KECSFamilyManager(private val componentManager: KECSComponentManager) : KECSEntityListener {
     private val tmpFamily = KECSFamily(BitSet(), BitSet(), BitSet())
-    val familyEntities = ObjectMap<KECSFamily, Array<KECSEntity>>()
+    val familyEntities = ObjectMap<KECSFamily, ObjectSet<KECSEntity>>()
 
     fun family(
         all: Array<KECSComponentMapper>? = null,
@@ -85,7 +86,7 @@ class KECSFamilyManager {
                     tmpFamily.allSet.clone() as BitSet,
                     tmpFamily.noneSet.clone() as BitSet,
                     tmpFamily.anySet.clone() as BitSet
-                ), Array(false, initialEntityCapacity)
+                ), ObjectSet(initialEntityCapacity)
             )
         }
 
@@ -93,4 +94,17 @@ class KECSFamilyManager {
     }
 
     operator fun contains(family: KECSFamily) = familyEntities.containsKey(family)
+
+    override fun entityAdded(entity: KECSEntity) {
+        val componentBits = componentManager.entityComponentBits[entity.id]
+        familyEntities.forEach {
+            if (componentBits in it.key) {
+                it.value.add(entity)
+            }
+        }
+    }
+
+    override fun entityRemoved(entity: KECSEntity) {
+        familyEntities.values().forEach { it.remove(entity) }
+    }
 }

@@ -15,8 +15,9 @@ import java.util.*
 object KECSFamilySpec : Spek({
     describe("A Family Manager") {
         val manager by memoized { KECSManager(1, 3) }
-        val familyManager by memoized { KECSFamilyManager() }
         val componentManager by memoized { KECSComponentManager(1, 3) }
+        val familyManager by memoized { KECSFamilyManager(componentManager) }
+        val entityManager by memoized { KECSEntityManager(manager, 1) }
 
         describe("creating a new family in an empty manager") {
             val all = Array<KECSComponentMapper>()
@@ -35,8 +36,8 @@ object KECSFamilySpec : Spek({
                 (family in familyManager) `should be equal to` true
             }
 
-            it("should create a new entity array with the initial entity capacity") {
-                familyManager.familyEntities[family].items.size `should be equal to` initialEntityCapacity
+            it("should create a new empty entity collection") {
+                familyManager.familyEntities[family].size `should be equal to` 0
             }
 
             it("should set the all BitSet of the family") {
@@ -162,6 +163,37 @@ object KECSFamilySpec : Spek({
 
             it("should return false if the entity's components do not match the family") {
                 (entityNone in family) `should be equal to` false
+            }
+        }
+
+        describe("creating an entity with a non-empty family manager") {
+            lateinit var entityAll: KECSEntity
+            lateinit var entityNone: KECSEntity
+            lateinit var family: KECSFamily
+            beforeEachTest {
+                entityManager.addListener(componentManager)
+                entityManager.addListener(familyManager)
+
+                val all = Array<KECSComponentMapper>()
+                val transformMapper = componentManager.mapper<TransformComponent>()
+                val physiqueMapper = componentManager.mapper<PhysicComponent>()
+                all.add(transformMapper, physiqueMapper)
+                family = familyManager.family(all, initialEntityCapacity = 1)
+                entityAll = entityManager.obtain {
+                    componentManager.add(this, componentManager.obtain<PhysicComponent>())
+                    componentManager.add(this, componentManager.obtain<TransformComponent>())
+                }
+                entityNone = entityManager.obtain()
+            }
+
+            it("should add the entity to the entities collection that matches its components") {
+                (entityAll in familyManager.familyEntities[family]) `should be equal to` true
+            }
+
+            it("should not add the entity to any entities collection if its components do not match any family") {
+                familyManager.familyEntities.values().forEach {
+                    (entityNone in it) `should be equal to` false
+                }
             }
         }
     }

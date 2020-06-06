@@ -58,7 +58,7 @@ class KECSEntityManager(
         }
     }
 
-    fun obtain(): KECSEntity {
+    fun obtain(init: KECSEntity.() -> Unit = {}): KECSEntity {
         val entity = entityPool.obtain().apply { active = true }
         if (entity.id >= entities.size) {
             // entity array is not big enough to store the new entity
@@ -68,6 +68,7 @@ class KECSEntityManager(
             }
             listeners.forEach { it.entityResize(entities.size) }
         }
+        entity.init()
         entities.set(entity.id, entity)
         listeners.forEach { it.entityAdded(entity) }
         return entity

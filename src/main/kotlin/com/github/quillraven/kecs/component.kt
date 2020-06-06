@@ -115,7 +115,9 @@ class KECSComponentManager(
     }
 
     override fun entityAdded(entity: KECSEntity) {
-        entityComponentBits[entity.id] = BitSet()
+        if (entityComponentBits[entity.id] == null) {
+            entityComponentBits[entity.id] = BitSet()
+        }
     }
 
     override fun entityRemoved(entity: KECSEntity) {
