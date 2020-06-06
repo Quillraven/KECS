@@ -63,20 +63,28 @@ object KECSManagerSpec : Spek({
             }
         }
 
-        describe("creating a family using an init block") {
-            lateinit var family: KECSFamily
+        describe("creating two families using an init block once") {
+            lateinit var family1: KECSFamily
+            lateinit var family2: KECSFamily
             beforeEachTest {
-                family = manager.family {
+                family1 = manager.family {
                     allOf(PhysicComponent::class, PlayerComponent::class)
                     noneOf(RemoveComponent::class)
                     anyOf(TransformComponent::class)
                 }
+                family2 = manager.family {}
             }
 
             it("should create a family with the properties of the init block") {
-                family.allSet.cardinality() `should be equal to` 2
-                family.noneSet.cardinality() `should be equal to` 1
-                family.anySet.cardinality() `should be equal to` 1
+                family1.allSet.cardinality() `should be equal to` 2
+                family1.noneSet.cardinality() `should be equal to` 1
+                family1.anySet.cardinality() `should be equal to` 1
+            }
+
+            it("should create an empty family") {
+                family2.allSet.cardinality() `should be equal to` 0
+                family2.noneSet.cardinality() `should be equal to` 0
+                family2.anySet.cardinality() `should be equal to` 0
             }
         }
 

@@ -12,19 +12,15 @@ class KECSFamilyDSL(
     private val anyMappers: Array<KECSComponentMapper>,
     private val componentManager: KECSComponentManager
 ) {
-
     fun allOf(vararg types: KClass<out KECSComponent>) {
-        allMappers.clear()
         types.forEach { allMappers.add(componentManager.mapper(it)) }
     }
 
     fun noneOf(vararg types: KClass<out KECSComponent>) {
-        noneMappers.clear()
         types.forEach { noneMappers.add(componentManager.mapper(it)) }
     }
 
     fun anyOf(vararg types: KClass<out KECSComponent>) {
-        anyMappers.clear()
         types.forEach { anyMappers.add(componentManager.mapper(it)) }
     }
 }

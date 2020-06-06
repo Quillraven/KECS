@@ -40,6 +40,9 @@ class KECSManager(
 
     fun family(init: KECSFamilyDSL.() -> Unit): KECSFamily {
         familyDSL.run {
+            allOfDSL.clear()
+            noneOfDSL.clear()
+            anyOfDSL.clear()
             init()
             return familyManager.family(allOfDSL, noneOfDSL, anyOfDSL, entityManager.entities.size)
         }
