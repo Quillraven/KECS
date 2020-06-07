@@ -114,7 +114,7 @@ object KECSEntitySpec : Spek({
             beforeEachTest {
                 entity = entityManager.obtain()
                 val mapper = componentManager.mapper<PlayerComponent>()
-                entity.updateEntity {
+                entity.update {
                     playerComponent = add(mapper)
                     transformComponent = add {
                         position.set(1f, 1f)
@@ -139,7 +139,7 @@ object KECSEntitySpec : Spek({
             lateinit var physiqueComponent: PhysicComponent
             beforeEachTest {
                 entity = entityManager.obtain()
-                entity.updateEntity {
+                entity.update {
                     transformComponent = add {
                         position.set(1f, 1f)
                     }

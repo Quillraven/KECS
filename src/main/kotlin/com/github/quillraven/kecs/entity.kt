@@ -73,7 +73,7 @@ data class KECSEntity(
     val components: Array<KECSComponent>
         get() = componentManager.entityComponents[id]
 
-    fun updateEntity(update: KECSEntityUpdateDSL.() -> (Unit)) = entityManager.update(this, update)
+    fun update(update: KECSEntityUpdateDSL.() -> (Unit)) = entityManager.update(this, update)
 
     fun free() = entityManager.free(this)
 
@@ -103,7 +103,7 @@ interface KECSEntityListener {
     fun entityAdded(entity: KECSEntity) = Unit
     fun entityRemoved(entity: KECSEntity) = Unit
     fun entityResize(newSize: Int) = Unit
-    fun entityComponentsUpdated(entity: KECSEntity) = Unit
+    fun entityComponentsUpdated(entity: KECSEntity, componentBits: BitSet) = Unit
 }
 
 class KECSEntityManager(
@@ -139,7 +139,7 @@ class KECSEntityManager(
     fun update(entity: KECSEntity, update: KECSEntityUpdateDSL.() -> (Unit)) {
         entityUpdateDSL.entity = entity
         entityUpdateDSL.update()
-        listeners.forEach { it.entityComponentsUpdated(entity) }
+        listeners.forEach { it.entityComponentsUpdated(entity, componentManager.entityComponentBits[entity.id]) }
     }
 
     fun free(entity: KECSEntity) {

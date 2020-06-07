@@ -197,5 +197,58 @@ object KECSFamilySpec : Spek({
                 }
             }
         }
+
+        describe("updating an entity by adding components with a non-empty family manager") {
+            lateinit var entity: KECSEntity
+            lateinit var family: KECSFamily
+            beforeEachTest {
+                entityManager.addListener(componentManager)
+                entityManager.addListener(familyManager)
+
+                val all = Array<KECSComponentMapper>()
+                val transformMapper = componentManager.mapper<TransformComponent>()
+                val physiqueMapper = componentManager.mapper<PhysicComponent>()
+                all.add(transformMapper, physiqueMapper)
+                family = familyManager.family(all, initialEntityCapacity = 1)
+                entity = entityManager.obtain()
+            }
+
+            it("should add the entity to the entities collection that matches its components") {
+                (entity in familyManager.familyEntities[family]) `should be equal to` false
+                entity.update {
+                    add<PhysicComponent>()
+                    add<TransformComponent>()
+                }
+                (entity in familyManager.familyEntities[family]) `should be equal to` true
+            }
+        }
+
+        describe("updating an entity by removing components with a non-empty family manager") {
+            lateinit var entity: KECSEntity
+            lateinit var family: KECSFamily
+            beforeEachTest {
+                entityManager.addListener(componentManager)
+                entityManager.addListener(familyManager)
+
+                val all = Array<KECSComponentMapper>()
+                val transformMapper = componentManager.mapper<TransformComponent>()
+                val physiqueMapper = componentManager.mapper<PhysicComponent>()
+                all.add(transformMapper, physiqueMapper)
+                family = familyManager.family(all, initialEntityCapacity = 1)
+                val components = Array<KECSComponent>().apply {
+                    add(componentManager.obtain<PhysicComponent>())
+                    add(componentManager.obtain<TransformComponent>())
+                }
+                entity = entityManager.obtain(components)
+            }
+
+            it("should remove the entity from the entities collection that was matching it before") {
+                (entity in familyManager.familyEntities[family]) `should be equal to` true
+                entity.update {
+                    remove<TransformComponent>()
+                }
+                (entity in familyManager.familyEntities[family]) `should be equal to` false
+            }
+        }
     }
 })

@@ -103,4 +103,14 @@ class KECSFamilyManager(private val componentManager: KECSComponentManager) : KE
     override fun entityRemoved(entity: KECSEntity) {
         familyEntities.values().forEach { it.remove(entity) }
     }
+
+    override fun entityComponentsUpdated(entity: KECSEntity, componentBits: BitSet) {
+        familyEntities.forEach {
+            if (componentBits in it.key && !it.value.contains(entity)) {
+                it.value.add(entity)
+            } else if (componentBits !in it.key && it.value.contains(entity)) {
+                it.value.remove(entity)
+            }
+        }
+    }
 }
