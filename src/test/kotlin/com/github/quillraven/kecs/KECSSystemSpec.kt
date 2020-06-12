@@ -24,16 +24,22 @@ object KECSSystemSpec : Spek({
                 systemManager.systems.contains(intervalSystem, true) `should be equal to` true
                 systemManager.systems.contains(interpolationSystem, true) `should be equal to` true
             }
+
+            it("should initialize each system as active system") {
+                intervalSystem.active `should be equal to` true
+                interpolationSystem.active `should be equal to` true
+            }
         }
 
         describe("updating a manager") {
             beforeEachTest {
+                interpolationSystem.active = false
                 systemManager.update(1f)
             }
 
-            it("should call update of each system") {
+            it("should call update of each active system") {
                 intervalSystem.calls `should be equal to` 1
-                interpolationSystem.intervalCalls `should be equal to` 1
+                interpolationSystem.intervalCalls `should be equal to` 0
             }
         }
 
