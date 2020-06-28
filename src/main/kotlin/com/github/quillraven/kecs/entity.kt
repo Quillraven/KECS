@@ -63,7 +63,7 @@ class KECSEntityUpdateDSL(
 }
 
 data class KECSEntity(
-    private val componentManager: KECSComponentManager,
+    val componentManager: KECSComponentManager,
     private val entityManager: KECSEntityManager,
     val id: Int,
     var active: Boolean
@@ -83,6 +83,13 @@ data class KECSEntity(
     // fast version
     operator fun contains(mapper: KECSComponentMapper) =
         componentManager.entityComponents[id][mapper.id] != null
+
+    // slow version
+    inline operator fun <reified T : KECSComponent> get(type: KClass<T>): T = get(componentManager.mapper(type))
+
+    // fast version
+    inline operator fun <reified T : KECSComponent> get(mapper: KECSComponentMapper): T =
+        componentManager.entityComponents[id][mapper.id] as T
 
     override fun reset() {
         active = false
