@@ -1,6 +1,7 @@
 package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.OrderedSet
 
 interface KECSSystem {
     var active: Boolean
@@ -43,6 +44,20 @@ abstract class KECSInterpolationSystem(
     abstract fun interpolate(alpha: Float)
 
     abstract fun interval(interval: Float)
+}
+
+abstract class KECSIteratingSystem(
+    family: KECSFamily,
+    val entities: OrderedSet<KECSEntity> = family.entities,
+    override var active: Boolean = true
+) : KECSSystem {
+    override fun update(deltaTime: Float) {
+        entities.forEach { updateEntity(it, deltaTime) }
+    }
+
+    fun sort(comparator: Comparator<KECSEntity>) = entities.orderedItems().sort(comparator)
+
+    abstract fun updateEntity(entity: KECSEntity, deltaTime: Float)
 }
 
 class KECSSystemManager(vararg systems: KECSSystem) {
