@@ -6,6 +6,7 @@ import com.github.quillraven.kecs.component.PhysicComponent
 import com.github.quillraven.kecs.component.PlayerComponent
 import com.github.quillraven.kecs.component.TransformComponent
 import org.amshove.kluent.`should be equal to`
+import org.amshove.kluent.`should be instance of`
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -166,6 +167,41 @@ object KECSEntitySpec : Spek({
 
             it("should remove the physique component") {
                 (physiqueComponent in entity) `should be equal to` false
+            }
+        }
+
+        describe("getting a transform component of an entity without a component mapper") {
+            lateinit var entity: KECSEntity
+            lateinit var component: TransformComponent
+            beforeEachTest {
+                entity = entityManager.obtain()
+                entity.update { add<TransformComponent>() }
+                component = entity[TransformComponent::class]
+                component.position.x = 2f
+            }
+
+            it("should return the transform component") {
+                component `should be instance of` TransformComponent::class
+                (component in entity) `should be equal to` true
+                component.position.x `should be equal to` 2f
+            }
+        }
+
+        describe("getting a transform component of an entity with a component mapper") {
+            lateinit var entity: KECSEntity
+            lateinit var component: TransformComponent
+            beforeEachTest {
+                entity = entityManager.obtain()
+                entity.update { add<TransformComponent>() }
+                val mapper = componentManager.mapper(TransformComponent::class)
+                component = entity[mapper]
+                component.position.x = 2f
+            }
+
+            it("should return the transform component") {
+                component `should be instance of` TransformComponent::class
+                (component in entity) `should be equal to` true
+                component.position.x `should be equal to` 2f
             }
         }
     }
