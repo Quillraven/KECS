@@ -2,7 +2,7 @@ package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.ObjectMap
-import com.badlogic.gdx.utils.ObjectSet
+import com.badlogic.gdx.utils.OrderedSet
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -28,8 +28,12 @@ class KECSFamilyDSL(
 data class KECSFamily(
     val allSet: BitSet,
     val noneSet: BitSet,
-    val anySet: BitSet
+    val anySet: BitSet,
+    private val familyManager: KECSFamilyManager
 ) {
+    val entities: OrderedSet<KECSEntity>
+        get() = familyManager.familyEntities[this]
+
     fun clear() {
         allSet.clear()
         noneSet.clear()
@@ -60,8 +64,8 @@ data class KECSFamily(
 }
 
 class KECSFamilyManager(private val componentManager: KECSComponentManager) : KECSEntityListener {
-    private val tmpFamily = KECSFamily(BitSet(), BitSet(), BitSet())
-    val familyEntities = ObjectMap<KECSFamily, ObjectSet<KECSEntity>>()
+    private val tmpFamily = KECSFamily(BitSet(), BitSet(), BitSet(), this)
+    val familyEntities = ObjectMap<KECSFamily, OrderedSet<KECSEntity>>()
 
     fun family(
         all: Array<KECSComponentMapper>? = null,
@@ -81,8 +85,12 @@ class KECSFamilyManager(private val componentManager: KECSComponentManager) : KE
                 KECSFamily(
                     tmpFamily.allSet.clone() as BitSet,
                     tmpFamily.noneSet.clone() as BitSet,
-                    tmpFamily.anySet.clone() as BitSet
-                ), ObjectSet(initialEntityCapacity)
+                    tmpFamily.anySet.clone() as BitSet,
+                    this
+                ),
+                OrderedSet<KECSEntity>(initialEntityCapacity).apply {
+                    orderedItems().ordered = false
+                }
             )
         }
 
