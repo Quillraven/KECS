@@ -40,6 +40,10 @@ object KECSFamilySpec : Spek({
                 familyManager.familyEntities[family].size `should be equal to` 0
             }
 
+            it("should reference the empty entity collection") {
+                family.entities `should be equal to` familyManager.familyEntities[family]
+            }
+
             it("should set the all BitSet of the family") {
                 all.forEach { family.allSet[it.id] `should be equal to` true }
             }
