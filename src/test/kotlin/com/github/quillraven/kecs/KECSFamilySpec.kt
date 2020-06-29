@@ -20,9 +20,9 @@ object KECSFamilySpec : Spek({
         val entityManager by memoized { KECSEntityManager(componentManager, 1) }
 
         describe("creating a new family in an empty manager") {
-            val all = Array<KECSComponentMapper>()
-            val none = Array<KECSComponentMapper>()
-            val any = Array<KECSComponentMapper>()
+            val all = Array<KECSComponentMapper<out KECSComponent>>()
+            val none = Array<KECSComponentMapper<out KECSComponent>>()
+            val any = Array<KECSComponentMapper<out KECSComponent>>()
             val initialEntityCapacity = 2
             lateinit var family: KECSFamily
             beforeEachTest {
@@ -75,9 +75,9 @@ object KECSFamilySpec : Spek({
         }
 
         describe("matching a component configuration against a family") {
-            val all = Array<KECSComponentMapper>()
-            val none = Array<KECSComponentMapper>()
-            val any = Array<KECSComponentMapper>()
+            val all = Array<KECSComponentMapper<out KECSComponent>>()
+            val none = Array<KECSComponentMapper<out KECSComponent>>()
+            val any = Array<KECSComponentMapper<out KECSComponent>>()
             val initialEntityCapacity = 2
             lateinit var everythingFamily: KECSFamily
             lateinit var allFamily: KECSFamily
@@ -149,7 +149,7 @@ object KECSFamilySpec : Spek({
             lateinit var entityNone: KECSEntity
             lateinit var family: KECSFamily
             beforeEachTest {
-                val all = Array<KECSComponentMapper>()
+                val all = Array<KECSComponentMapper<out KECSComponent>>()
                 val transformMapper = componentManager.mapper<TransformComponent>()
                 val physiqueMapper = componentManager.mapper<PhysicComponent>()
                 all.add(transformMapper, physiqueMapper)
@@ -178,7 +178,7 @@ object KECSFamilySpec : Spek({
                 entityManager.addListener(componentManager)
                 entityManager.addListener(familyManager)
 
-                val all = Array<KECSComponentMapper>()
+                val all = Array<KECSComponentMapper<out KECSComponent>>()
                 val transformMapper = componentManager.mapper<TransformComponent>()
                 val physiqueMapper = componentManager.mapper<PhysicComponent>()
                 all.add(transformMapper, physiqueMapper)
@@ -209,7 +209,7 @@ object KECSFamilySpec : Spek({
                 entityManager.addListener(componentManager)
                 entityManager.addListener(familyManager)
 
-                val all = Array<KECSComponentMapper>()
+                val all = Array<KECSComponentMapper<out KECSComponent>>()
                 val transformMapper = componentManager.mapper<TransformComponent>()
                 val physiqueMapper = componentManager.mapper<PhysicComponent>()
                 all.add(transformMapper, physiqueMapper)
@@ -234,7 +234,7 @@ object KECSFamilySpec : Spek({
                 entityManager.addListener(componentManager)
                 entityManager.addListener(familyManager)
 
-                val all = Array<KECSComponentMapper>()
+                val all = Array<KECSComponentMapper<out KECSComponent>>()
                 val transformMapper = componentManager.mapper<TransformComponent>()
                 val physiqueMapper = componentManager.mapper<PhysicComponent>()
                 all.add(transformMapper, physiqueMapper)

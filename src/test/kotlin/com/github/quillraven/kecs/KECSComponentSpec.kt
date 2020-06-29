@@ -203,10 +203,10 @@ object KECSComponentSpec : Spek({
 
         describe("getting a non-existing component from an entity with mapper") {
             lateinit var entity: KECSEntity
-            lateinit var mapper: KECSComponentMapper
+            lateinit var mapper: KECSComponentMapper<TransformComponent>
             beforeEachTest {
                 entity = entityManager.obtain()
-                mapper = componentManager.mapper<TransformComponent>()
+                mapper = componentManager.mapper()
             }
 
             it("should throw a KECSMissingComponentException") {

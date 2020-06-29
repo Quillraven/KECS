@@ -161,9 +161,9 @@ object KECSManagerSpec : Spek({
         }
 
         describe("creating a component mapper") {
-            lateinit var mapper: KECSComponentMapper
+            lateinit var mapper: KECSComponentMapper<TransformComponent>
             beforeEachTest {
-                mapper = manager.mapper<TransformComponent>()
+                mapper = manager.mapper()
             }
 
             it("should return a new component mapper of the given type") {

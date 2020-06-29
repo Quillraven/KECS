@@ -34,12 +34,12 @@ class KECSEntityUpdateDSL(
         add(type, componentManager.mapper(type), init)
 
     // fast version
-    inline fun <reified T : KECSComponent> add(mapper: KECSComponentMapper, noinline init: T.() -> (Unit) = {}) =
+    inline fun <reified T : KECSComponent> add(mapper: KECSComponentMapper<T>, noinline init: T.() -> (Unit) = {}) =
         add(T::class, mapper, init)
 
     // fast version
     @Suppress("UNCHECKED_CAST")
-    fun <T : KECSComponent> add(type: KClass<T>, mapper: KECSComponentMapper, init: T.() -> (Unit) = {}): T {
+    fun <T : KECSComponent> add(type: KClass<T>, mapper: KECSComponentMapper<T>, init: T.() -> (Unit) = {}): T {
         val component = (componentManager.obtain(type) as T).apply(init)
         componentManager.add(entity, mapper, component)
         return component
@@ -52,10 +52,10 @@ class KECSEntityUpdateDSL(
     fun <T : KECSComponent> remove(type: KClass<T>) = remove(type, componentManager.mapper(type))
 
     // fast version
-    inline fun <reified T : KECSComponent> remove(mapper: KECSComponentMapper) = remove(T::class, mapper)
+    inline fun <reified T : KECSComponent> remove(mapper: KECSComponentMapper<T>) = remove(T::class, mapper)
 
     // fast version
-    fun <T : KECSComponent> remove(type: KClass<T>, mapper: KECSComponentMapper) =
+    fun <T : KECSComponent> remove(type: KClass<T>, mapper: KECSComponentMapper<T>) =
         remove(componentManager.get(type, entity, mapper))
 
     // fastest version
@@ -81,14 +81,14 @@ data class KECSEntity(
     operator fun contains(component: KECSComponent) = contains(componentManager.mapper(component::class))
 
     // fast version
-    operator fun contains(mapper: KECSComponentMapper) =
+    operator fun contains(mapper: KECSComponentMapper<out KECSComponent>) =
         componentManager.entityComponents[id][mapper.id] != null
 
     // slow version
     inline operator fun <reified T : KECSComponent> get(type: KClass<T>): T = get(componentManager.mapper(type))
 
     // fast version
-    inline operator fun <reified T : KECSComponent> get(mapper: KECSComponentMapper): T =
+    inline operator fun <reified T : KECSComponent> get(mapper: KECSComponentMapper<T>): T =
         componentManager.entityComponents[id][mapper.id] as T
 
     override fun reset() {

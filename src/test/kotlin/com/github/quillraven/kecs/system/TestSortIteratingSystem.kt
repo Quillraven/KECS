@@ -8,6 +8,7 @@ import com.github.quillraven.kecs.component.TransformComponent
 
 class TestSortIteratingSystem(manager: KECSManager) :
     KECSIteratingSystem(manager.family { allOf(PlayerComponent::class, TransformComponent::class) }) {
+    private val transformMapper = manager.mapper<TransformComponent>()
     private val comparator = compareBy<KECSEntity> { it[TransformComponent::class] }
     var updateCalls = 0
     var updateEntityCalls = 0
@@ -19,7 +20,7 @@ class TestSortIteratingSystem(manager: KECSManager) :
     }
 
     override fun updateEntity(entity: KECSEntity, deltaTime: Float) {
-        entity[TransformComponent::class].position.x = updateEntityCalls.toFloat()
+        entity[transformMapper].position.x = updateEntityCalls.toFloat()
         ++updateEntityCalls
     }
 }

@@ -7,9 +7,9 @@ import java.util.*
 import kotlin.reflect.KClass
 
 class KECSFamilyDSL(
-    private val allMappers: Array<KECSComponentMapper>,
-    private val noneMappers: Array<KECSComponentMapper>,
-    private val anyMappers: Array<KECSComponentMapper>,
+    private val allMappers: Array<KECSComponentMapper<out KECSComponent>>,
+    private val noneMappers: Array<KECSComponentMapper<out KECSComponent>>,
+    private val anyMappers: Array<KECSComponentMapper<out KECSComponent>>,
     private val componentManager: KECSComponentManager
 ) {
     fun allOf(vararg types: KClass<out KECSComponent>) {
@@ -68,9 +68,9 @@ class KECSFamilyManager(private val componentManager: KECSComponentManager) : KE
     val familyEntities = ObjectMap<KECSFamily, OrderedSet<KECSEntity>>()
 
     fun family(
-        all: Array<KECSComponentMapper>? = null,
-        none: Array<KECSComponentMapper>? = null,
-        any: Array<KECSComponentMapper>? = null,
+        all: Array<KECSComponentMapper<out KECSComponent>>? = null,
+        none: Array<KECSComponentMapper<out KECSComponent>>? = null,
+        any: Array<KECSComponentMapper<out KECSComponent>>? = null,
         initialEntityCapacity: Int
     ): KECSFamily {
         tmpFamily.run {

@@ -16,9 +16,9 @@ class KECSManager(
         addListener(familyManager)
     }
 
-    private val allOfDSL = Array<KECSComponentMapper>()
-    private val noneOfDSL = Array<KECSComponentMapper>()
-    private val anyOfDSL = Array<KECSComponentMapper>()
+    private val allOfDSL = Array<KECSComponentMapper<out KECSComponent>>()
+    private val noneOfDSL = Array<KECSComponentMapper<out KECSComponent>>()
+    private val anyOfDSL = Array<KECSComponentMapper<out KECSComponent>>()
     private val familyDSL = KECSFamilyDSL(allOfDSL, noneOfDSL, anyOfDSL, componentManager)
 
     private val componentsDSL = Array<KECSComponent>(false, initialComponentCapacity)
@@ -34,9 +34,9 @@ class KECSManager(
 
     operator fun contains(entity: KECSEntity) = entity in entityManager
 
-    inline fun <reified T : KECSComponent> mapper(): KECSComponentMapper = mapper(T::class)
+    inline fun <reified T : KECSComponent> mapper(): KECSComponentMapper<T> = mapper(T::class)
 
-    fun mapper(type: KClass<out KECSComponent>) = componentManager.mapper(type)
+    fun <T : KECSComponent> mapper(type: KClass<T>) = componentManager.mapper(type)
 
     fun family(init: KECSFamilyDSL.() -> Unit): KECSFamily {
         familyDSL.run {
