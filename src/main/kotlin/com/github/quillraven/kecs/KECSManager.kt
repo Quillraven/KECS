@@ -5,7 +5,8 @@ import kotlin.reflect.KClass
 
 class KECSManager(
     initialEntityCapacity: Int = 100,
-    initialComponentCapacity: Int = 20
+    initialComponentCapacity: Int = 20,
+    vararg systems: KECSSystem
 ) {
     private val componentManager = KECSComponentManager(initialEntityCapacity, initialComponentCapacity)
     private val familyManager = KECSFamilyManager(componentManager)
@@ -15,6 +16,7 @@ class KECSManager(
         addListener(componentManager)
         addListener(familyManager)
     }
+    private val systemManager = KECSSystemManager(*systems)
 
     private val allOfDSL = Array<KECSComponentMapper<out KECSComponent>>()
     private val noneOfDSL = Array<KECSComponentMapper<out KECSComponent>>()
@@ -47,4 +49,8 @@ class KECSManager(
             return familyManager.family(allOfDSL, noneOfDSL, anyOfDSL, entityManager.entities.size)
         }
     }
+
+    fun system(system: KECSSystem) = systemManager.systems.add(system)
+
+    fun update(deltaTime: Float) = systemManager.update(deltaTime)
 }
