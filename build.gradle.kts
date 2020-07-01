@@ -16,6 +16,7 @@ dependencies {
 
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:${project.property("spekVersion")}")
     testImplementation("org.amshove.kluent:kluent:${project.property("kluentVersion")}")
+    testImplementation("com.badlogicgames.ashley:ashley:1.7.3")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:${project.property("spekVersion")}")
     testRuntimeOnly("org.jetbrains.kotlin:kotlin-reflect:${project.property("kotlinVersion")}")
 }
