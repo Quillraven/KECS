@@ -51,6 +51,14 @@ data class Family(
     val entities: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
         orderedItems().ordered = false
     }
+    val entitiesToAdd: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
+        orderedItems().ordered = false
+    }
+    val entitiesToRemove: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
+        orderedItems().ordered = false
+    }
+    val isDirty: Boolean
+        get() = !entitiesToAdd.isEmpty || !entitiesToRemove.isEmpty
 
     operator fun contains(entityID: Int): Boolean {
         allOf.forEach { manager ->
@@ -78,9 +86,16 @@ data class Family(
 
     override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) {
         if (entityID in this) {
-            entities.add(entityID)
+            entitiesToAdd.add(entityID)
+            entitiesToRemove.remove(entityID)
         } else {
-            entities.remove(entityID)
+            entitiesToRemove.add(entityID)
+            entitiesToAdd.remove(entityID)
         }
+    }
+
+    fun update() {
+        entitiesToRemove.forEach { entities.remove(it) }
+        entitiesToAdd.forEach { entities.add(it) }
     }
 }

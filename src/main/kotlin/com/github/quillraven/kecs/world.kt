@@ -98,6 +98,11 @@ class World(val initialEntityCapacity: Int) {
         systems.forEach { system ->
             if (system.active) {
                 system.update(this, deltaTime)
+                families.forEach {
+                    if (it.isDirty) {
+                        it.update()
+                    }
+                }
             }
         }
     }

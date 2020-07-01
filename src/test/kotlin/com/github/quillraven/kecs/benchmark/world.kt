@@ -97,7 +97,7 @@ class KECSIteratingSystemSimple(
 class KECSIteratingSystemComplex1(
     world: World,
     private val manager1: ComponentManager<KECSComponent1> = world.componentManager(),
-    private val manager2: ComponentManager<KECSComponent1> = world.componentManager()
+    private val manager2: ComponentManager<KECSComponent2> = world.componentManager()
 ) : com.github.quillraven.kecs.IteratingSystem(
     world.family {
         allOf(KECSComponent1::class)
@@ -121,7 +121,7 @@ class KECSIteratingSystemComplex1(
 class KECSIteratingSystemComplex2(
     world: World,
     private val manager1: ComponentManager<KECSComponent1> = world.componentManager(),
-    private val manager2: ComponentManager<KECSComponent1> = world.componentManager()
+    private val manager2: ComponentManager<KECSComponent2> = world.componentManager()
 ) : com.github.quillraven.kecs.IteratingSystem(
     world.family {
         anyOf(KECSComponent1::class, KECSComponent2::class, KECSComponent3::class)
