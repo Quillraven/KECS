@@ -48,5 +48,24 @@ object ComponentSpec : Spek({
                 invoking { manager[entityID].x } `should throw` KotlinNullPointerException::class
             }
         }
+
+        describe("Removing an entity from the world") {
+            lateinit var manager: ComponentManager<TransformComponent>
+            var entityID = -1
+            beforeEachTest {
+                manager = world.componentManager()
+                entityID = world.entity()
+                manager.register(entityID)
+                world.removeEntity(entityID)
+            }
+
+            it("should remove the entity's component data") {
+                (entityID in manager) `should be equal to` false
+            }
+
+            it("should throw an exception when accessing the data") {
+                invoking { manager[entityID].x } `should throw` KotlinNullPointerException::class
+            }
+        }
     }
 })

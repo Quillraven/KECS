@@ -1,5 +1,6 @@
 package com.github.quillraven.kecs
 
+import com.github.quillraven.kecs.component.PlayerComponent
 import com.github.quillraven.kecs.component.TransformComponent
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should not be equal to`
@@ -95,6 +96,11 @@ object WorldSpec : Spek({
 
             it("should create a manager for type TransformComponent") {
                 manager `should not be equal to` null
+                manager.type `should be equal to` TransformComponent::class.java
+            }
+
+            it("should add the manager as EntityListener to the world") {
+                (manager in world) `should be equal to` true
             }
         }
 
@@ -109,6 +115,30 @@ object WorldSpec : Spek({
             it("should create a manager only once") {
                 manager1 `should not be equal to` null
                 manager1 `should be equal to` manager2
+            }
+        }
+
+        describe("Adding a component manager to a non-empty world") {
+            lateinit var manager1: ComponentManager<TransformComponent>
+            lateinit var manager2: ComponentManager<PlayerComponent>
+            beforeEachTest {
+                manager1 = world.componentManager()
+                manager2 = world.componentManager()
+            }
+
+            it("should create a manager for type TransformComponent") {
+                manager1 `should not be equal to` null
+                manager1.type `should be equal to` TransformComponent::class.java
+            }
+
+            it("should create a manager for type PlayerComponent") {
+                manager2 `should not be equal to` null
+                manager2.type `should be equal to` PlayerComponent::class.java
+            }
+
+            it("should add both managers as EntityListener to the world") {
+                world.removeListener(manager1) `should be equal to` true
+                (manager2 in world) `should be equal to` true
             }
         }
     }

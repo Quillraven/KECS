@@ -4,3 +4,5 @@ class TransformComponent {
     var x = 0
     var y = 0
 }
+
+class PlayerComponent
