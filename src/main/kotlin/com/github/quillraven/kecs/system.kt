@@ -10,9 +10,7 @@ abstract class IteratingSystem(
     private val family: Family,
     override var active: Boolean = true
 ) : System {
-    override fun update(world: World, deltaTime: Float) {
-        family.entities.forEach { updateEntity(world, it, deltaTime) }
-    }
+    override fun update(world: World, deltaTime: Float) = family.iterate { updateEntity(world, it, deltaTime) }
 
     abstract fun updateEntity(world: World, entityID: Int, deltaTime: Float)
 }

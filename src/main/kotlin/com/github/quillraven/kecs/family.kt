@@ -1,5 +1,6 @@
 package com.github.quillraven.kecs
 
+import com.badlogic.gdx.utils.IntMap
 import com.badlogic.gdx.utils.OrderedSet
 import kotlin.reflect.KClass
 
@@ -36,6 +37,10 @@ object FamilyBuilder {
     }
 }
 
+private enum class EntityUpdateOperation {
+    ADD, REMOVE
+}
+
 data class Family(
     private val world: World,
     val allOf: OrderedSet<ComponentManager<*>> = OrderedSet<ComponentManager<*>>().apply {
@@ -48,17 +53,11 @@ data class Family(
         orderedItems().ordered = false
     }
 ) : ComponentListener {
-    val entities: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
+    private val entities: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
         orderedItems().ordered = false
     }
-    val entitiesToAdd: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
-        orderedItems().ordered = false
-    }
-    val entitiesToRemove: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
-        orderedItems().ordered = false
-    }
-    val isDirty: Boolean
-        get() = !entitiesToAdd.isEmpty || !entitiesToRemove.isEmpty
+    private val entityUpdateOperations = IntMap<EntityUpdateOperation>(world.initialEntityCapacity)
+    private var iterating = false
 
     operator fun contains(entityID: Int): Boolean {
         allOf.forEach { manager ->
@@ -86,16 +85,30 @@ data class Family(
 
     override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) {
         if (entityID in this) {
-            entitiesToAdd.add(entityID)
-            entitiesToRemove.remove(entityID)
+            if (iterating) {
+                entityUpdateOperations.put(entityID, EntityUpdateOperation.ADD)
+            } else {
+                entities.add(entityID)
+            }
         } else {
-            entitiesToRemove.add(entityID)
-            entitiesToAdd.remove(entityID)
+            if (iterating) {
+                entityUpdateOperations.put(entityID, EntityUpdateOperation.REMOVE)
+            } else {
+                entities.remove(entityID)
+            }
         }
     }
 
-    fun update() {
-        entitiesToRemove.forEach { entities.remove(it) }
-        entitiesToAdd.forEach { entities.add(it) }
+    fun iterate(action: (Int) -> Unit) {
+        iterating = true
+        entities.forEach { action(it) }
+        iterating = false
+        entityUpdateOperations.forEach { entry ->
+            if (entry.value == EntityUpdateOperation.ADD) {
+                entities.add(entry.key)
+            } else {
+                entities.remove(entry.key)
+            }
+        }
     }
 }
