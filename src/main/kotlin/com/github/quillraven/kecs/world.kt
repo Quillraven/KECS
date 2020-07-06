@@ -5,8 +5,8 @@ import com.badlogic.gdx.utils.ObjectMap
 import com.badlogic.gdx.utils.OrderedSet
 
 interface EntityListener {
-    fun entityAdded(entityID: Int)
-    fun entityRemoved(entityID: Int)
+    fun entityAdded(entityID: Int) = Unit
+    fun entityRemoved(entityID: Int) = Unit
 }
 
 class World(val initialEntityCapacity: Int) {

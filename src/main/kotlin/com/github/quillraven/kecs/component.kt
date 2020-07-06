@@ -2,10 +2,11 @@ package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.OrderedSet
+import kotlin.math.max
 
 interface ComponentListener {
-    fun componentAdded(entityID: Int, manager: ComponentManager<*>)
-    fun componentRemoved(entityID: Int, manager: ComponentManager<*>)
+    fun componentAdded(entityID: Int, manager: ComponentManager<*>) = Unit
+    fun componentRemoved(entityID: Int, manager: ComponentManager<*>) = Unit
 }
 
 class ComponentManager<T>(
@@ -21,8 +22,17 @@ class ComponentManager<T>(
     private val listeners = OrderedSet<ComponentListener>().apply {
         orderedItems().ordered = false
     }
+    val size: Int
+        get() = components.size
 
     fun register(entityID: Int): T {
+        if (entityID >= components.size) {
+            // initial entity capacity exceeded -> resize by 75%
+            repeat(max(1, (entityID * 0.75f).toInt())) {
+                components.add(null)
+            }
+        }
+
         if (components[entityID] == null) {
             when {
                 freeComponents.isEmpty -> {
@@ -55,8 +65,6 @@ class ComponentManager<T>(
     fun addListener(listener: ComponentListener) = listeners.add(listener)
 
     fun removeListener(listener: ComponentListener) = listeners.remove(listener)
-
-    override fun entityAdded(entityID: Int) = Unit
 
     override fun entityRemoved(entityID: Int) = deregister(entityID)
 }

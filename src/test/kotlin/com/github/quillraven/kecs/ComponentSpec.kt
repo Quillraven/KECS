@@ -1,8 +1,11 @@
 package com.github.quillraven.kecs
 
+import com.github.quillraven.kecs.component.TestComponentListener
 import com.github.quillraven.kecs.component.TransformComponent
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should be instance of`
+import org.amshove.kluent.`should be`
+import org.amshove.kluent.`should not be equal to`
 import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
 import org.spekframework.spek2.Spek
@@ -10,16 +13,19 @@ import org.spekframework.spek2.style.specification.describe
 
 @Suppress("unused")
 object ComponentSpec : Spek({
-    val world by memoized { World(2) }
+    val entityCapacity = 2
+    val listener by memoized { TestComponentListener() }
+    val manager by memoized {
+        ComponentManager(entityCapacity, TransformComponent::class.java).apply {
+            addListener(listener)
+        }
+    }
 
     describe("A component manager") {
         describe("Registering an entity to an empty manager") {
-            lateinit var manager: ComponentManager<TransformComponent>
             lateinit var component: TransformComponent
-            var entityID = -1
+            val entityID = 0
             beforeEachTest {
-                manager = world.componentManager()
-                entityID = world.entity()
                 manager.register(entityID)
                 component = manager[entityID]
             }
@@ -28,15 +34,22 @@ object ComponentSpec : Spek({
                 (entityID in manager) `should be equal to` true
                 component `should be instance of` TransformComponent::class
             }
+
+            it("should call componentAdded for all listeners") {
+                listener.addCalls `should be equal to` 1
+            }
+
+            it("should not call componentRemoved for any listener") {
+                listener.removeCalls `should be equal to` 0
+            }
         }
 
-        describe("Unregistering an entity from a manager") {
-            lateinit var manager: ComponentManager<TransformComponent>
-            var entityID = -1
+        describe("Deregistering an entity from a manager") {
+            val entityID = 0
             beforeEachTest {
-                manager = world.componentManager()
-                entityID = world.entity()
+                manager.removeListener(listener)
                 manager.register(entityID)
+                manager.addListener(listener)
                 manager.deregister(entityID)
             }
 
@@ -45,18 +58,72 @@ object ComponentSpec : Spek({
             }
 
             it("should throw an exception when accessing the data") {
-                invoking { manager[entityID].x } `should throw` MissingComponentException::class
+                invoking { manager[entityID] } `should throw` MissingComponentException::class
+            }
+
+            it("should call componentRemoved for all listeners") {
+                listener.removeCalls `should be equal to` 1
+            }
+
+            it("should not call componentAdded for any listener") {
+                listener.addCalls `should be equal to` 0
+            }
+        }
+
+        describe("Adding a ComponentListener to a manager and adding and removing an entity") {
+            lateinit var listener2: TestComponentListener
+            beforeEachTest {
+                listener2 = TestComponentListener()
+                manager.addListener(listener2)
+                manager.register(0)
+                manager.deregister(0)
+            }
+
+            it("should call componentAdded for the listener") {
+                listener2.addCalls `should be equal to` 1
+            }
+
+            it("should call componentRemoved for the listener") {
+                listener2.removeCalls `should be equal to` 1
+            }
+
+            it("should add the listener to the listeners list") {
+                listener.addCalls `should be equal to` listener2.addCalls
+                listener.removeCalls `should be equal to` listener2.removeCalls
+            }
+        }
+
+        describe("Removing a ComponentListener from a manager and adding and removing an entity") {
+            lateinit var listener2: TestComponentListener
+            beforeEachTest {
+                listener2 = TestComponentListener()
+                manager.addListener(listener2)
+                manager.removeListener(listener2)
+                manager.register(0)
+                manager.deregister(0)
+            }
+
+            it("should not call componentAdded for the listener") {
+                listener2.addCalls `should be equal to` 0
+            }
+
+            it("should not call componentRemoved for the listener") {
+                listener2.removeCalls `should be equal to` 0
+            }
+
+            it("should remove the listener from the listeners list") {
+                listener.addCalls `should not be equal to` listener2.addCalls
+                listener.removeCalls `should not be equal to` listener2.removeCalls
             }
         }
 
         describe("Removing an entity from the world") {
-            lateinit var manager: ComponentManager<TransformComponent>
-            var entityID = -1
+            val entityID = 0
             beforeEachTest {
-                manager = world.componentManager()
-                entityID = world.entity()
+                manager.removeListener(listener)
                 manager.register(entityID)
-                world.removeEntity(entityID)
+                manager.addListener(listener)
+                manager.entityRemoved(entityID)
             }
 
             it("should remove the entity's component data") {
@@ -64,7 +131,68 @@ object ComponentSpec : Spek({
             }
 
             it("should throw an exception when accessing the data") {
-                invoking { manager[entityID].x } `should throw` MissingComponentException::class
+                invoking { manager[entityID] } `should throw` MissingComponentException::class
+            }
+
+            it("should call componentRemoved for all listeners") {
+                listener.removeCalls `should be equal to` 1
+            }
+
+            it("should not call componentAdded for any listener") {
+                listener.addCalls `should be equal to` 0
+            }
+        }
+
+        describe("Registering the same entity twice") {
+            val entityID = 0
+            lateinit var component1: TransformComponent
+            lateinit var component2: TransformComponent
+            beforeEachTest {
+                component1 = manager.register(entityID)
+                component2 = manager.register(entityID)
+            }
+
+            it("should return the same component") {
+                component1 `should be` component2
+            }
+
+            it("should call componentAdded only once") {
+                listener.addCalls `should be equal to` 1
+            }
+        }
+
+        describe("Deregistering a non-existing entity") {
+            beforeEachTest {
+                manager.deregister(0)
+            }
+
+            it("should not call componentRemoved for any listener") {
+                listener.removeCalls `should be equal to` 0
+            }
+        }
+
+        describe("Removing an entity and adding a new one") {
+            val entityID = 0
+            lateinit var component1: TransformComponent
+            lateinit var component2: TransformComponent
+            beforeEachTest {
+                component1 = manager.register(entityID)
+                manager.deregister(entityID)
+                component2 = manager.register(entityID)
+            }
+
+            it("should reuse a single component instance") {
+                component1 `should be` component2
+            }
+        }
+
+        describe("Adding an entity that exceeds the manager's initial capacity") {
+            beforeEachTest {
+                manager.register(entityCapacity)
+            }
+
+            it("should resize the capacity by 75%") {
+                manager.size `should be equal to` (entityCapacity * 1.75).toInt()
             }
         }
     }
