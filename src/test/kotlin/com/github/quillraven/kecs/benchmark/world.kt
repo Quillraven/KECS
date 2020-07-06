@@ -1,10 +1,6 @@
 package com.github.quillraven.kecs.benchmark
 
-import com.badlogic.ashley.core.Component
-import com.badlogic.ashley.core.ComponentMapper
-import com.badlogic.ashley.core.Entity
-import com.badlogic.ashley.core.Family
-import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.ashley.core.*
 import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.utils.Pool
 import com.github.quillraven.kecs.ComponentManager
@@ -112,7 +108,7 @@ class KECSIteratingSystemComplex1(
             manager1[entityID].x++
             manager2.register(entityID)
         } else {
-            manager1.unregister(entityID)
+            manager1.deregister(entityID)
         }
         ++counter
     }
@@ -128,7 +124,7 @@ class KECSIteratingSystemComplex2(
     }
 ) {
     override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
-        manager2.unregister(entityID)
+        manager2.deregister(entityID)
         manager1.register(entityID)
     }
 }

@@ -38,7 +38,7 @@ class ComponentManager<T>(
         return components[entityID]
     }
 
-    fun unregister(entityID: Int) {
+    fun deregister(entityID: Int) {
         if (components[entityID] != null) {
             listeners.forEach { it.componentRemoved(entityID, this) }
             freeComponents.add(components[entityID])
@@ -50,7 +50,7 @@ class ComponentManager<T>(
 
     operator fun get(entityID: Int): T =
         components[entityID]
-            ?: throw KotlinNullPointerException("Entity $entityID does not have a component of type $type")
+            ?: throw MissingComponentException(entityID, type)
 
     fun addListener(listener: ComponentListener) = listeners.add(listener)
 
@@ -58,5 +58,5 @@ class ComponentManager<T>(
 
     override fun entityAdded(entityID: Int) = Unit
 
-    override fun entityRemoved(entityID: Int) = unregister(entityID)
+    override fun entityRemoved(entityID: Int) = deregister(entityID)
 }

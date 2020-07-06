@@ -37,7 +37,7 @@ object ComponentSpec : Spek({
                 manager = world.componentManager()
                 entityID = world.entity()
                 manager.register(entityID)
-                manager.unregister(entityID)
+                manager.deregister(entityID)
             }
 
             it("should remove the entity's component data") {
@@ -45,7 +45,7 @@ object ComponentSpec : Spek({
             }
 
             it("should throw an exception when accessing the data") {
-                invoking { manager[entityID].x } `should throw` KotlinNullPointerException::class
+                invoking { manager[entityID].x } `should throw` MissingComponentException::class
             }
         }
 
@@ -64,7 +64,7 @@ object ComponentSpec : Spek({
             }
 
             it("should throw an exception when accessing the data") {
-                invoking { manager[entityID].x } `should throw` KotlinNullPointerException::class
+                invoking { manager[entityID].x } `should throw` MissingComponentException::class
             }
         }
     }

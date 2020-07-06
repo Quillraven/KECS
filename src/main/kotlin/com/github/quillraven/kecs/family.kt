@@ -14,25 +14,19 @@ object FamilyBuilder {
 
     fun allOf(vararg componentTypes: KClass<*>) {
         componentTypes.forEach {
-            val manager = world.componentManager(it.java)
-            family.allOf.add(manager)
-            manager.addListener(family)
+            family.allOf.add(world.componentManager(it.java))
         }
     }
 
     fun noneOf(vararg componentTypes: KClass<*>) {
         componentTypes.forEach {
-            val manager = world.componentManager(it.java)
-            family.noneOf.add(manager)
-            manager.addListener(family)
+            family.noneOf.add(world.componentManager(it.java))
         }
     }
 
     fun anyOf(vararg componentTypes: KClass<*>) {
         componentTypes.forEach {
-            val manager = world.componentManager(it.java)
-            family.anyOf.add(manager)
-            manager.addListener(family)
+            family.anyOf.add(world.componentManager(it.java))
         }
     }
 }
