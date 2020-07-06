@@ -27,6 +27,7 @@ class World(val initialEntityCapacity: Int) {
     private val families = OrderedSet<Family>().apply {
         orderedItems().ordered = false
     }
+    private val familyBuilder = FamilyBuilder(this, families)
 
     fun entity(): Int {
         val entity = when {
@@ -75,20 +76,9 @@ class World(val initialEntityCapacity: Int) {
 
     operator fun contains(listener: EntityListener) = listeners.contains(listener)
 
-    fun family(init: FamilyBuilder.() -> (Unit)): Family {
-        FamilyBuilder.apply {
-            family = Family(this@World)
-            world = this@World
-            init()
-            if (families.add(family)) {
-                family.allOf.forEach { it.addListener(family) }
-                family.noneOf.forEach { it.addListener(family) }
-                family.anyOf.forEach { it.addListener(family) }
-                return family
-            }
-            return families.get(family)
-        }
-    }
+    fun family(init: FamilyBuilder.() -> (Unit)) = familyBuilder.apply(init).build()
+
+    operator fun contains(family: Family) = families.contains(family)
 
     fun systems(vararg system: System) {
         system.forEach { systems.add(it) }

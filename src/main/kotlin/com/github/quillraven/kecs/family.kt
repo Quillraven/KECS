@@ -1,6 +1,7 @@
 package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.IntMap
+import com.badlogic.gdx.utils.ObjectSet
 import com.badlogic.gdx.utils.OrderedSet
 import kotlin.reflect.KClass
 
@@ -8,26 +9,48 @@ import kotlin.reflect.KClass
 annotation class FamilyDsl
 
 @FamilyDsl
-object FamilyBuilder {
-    lateinit var family: Family
-    lateinit var world: World
+class FamilyBuilder(
+    private val world: World,
+    private val families: ObjectSet<Family>
+) {
+    private val allOf = OrderedSet<ComponentManager<*>>().apply {
+        orderedItems().ordered = false
+    }
+    private val noneOf = OrderedSet<ComponentManager<*>>().apply {
+        orderedItems().ordered = false
+    }
+    private val anyOf = OrderedSet<ComponentManager<*>>().apply {
+        orderedItems().ordered = false
+    }
 
     fun allOf(vararg componentTypes: KClass<*>) {
         componentTypes.forEach {
-            family.allOf.add(world.componentManager(it.java))
+            allOf.add(world.componentManager(it.java))
         }
     }
 
     fun noneOf(vararg componentTypes: KClass<*>) {
         componentTypes.forEach {
-            family.noneOf.add(world.componentManager(it.java))
+            noneOf.add(world.componentManager(it.java))
         }
     }
 
     fun anyOf(vararg componentTypes: KClass<*>) {
         componentTypes.forEach {
-            family.anyOf.add(world.componentManager(it.java))
+            anyOf.add(world.componentManager(it.java))
         }
+    }
+
+    fun build(): Family {
+        val family = Family(world, allOf, noneOf, anyOf)
+        if (families.contains(family)) {
+            return families.get(family)
+        }
+        allOf.forEach { it.addListener(family) }
+        noneOf.forEach { it.addListener(family) }
+        anyOf.forEach { it.addListener(family) }
+        families.add(family)
+        return families.get(family)
     }
 }
 
@@ -37,15 +60,9 @@ private enum class EntityUpdateOperation {
 
 data class Family(
     private val world: World,
-    val allOf: OrderedSet<ComponentManager<*>> = OrderedSet<ComponentManager<*>>().apply {
-        orderedItems().ordered = false
-    },
-    val noneOf: OrderedSet<ComponentManager<*>> = OrderedSet<ComponentManager<*>>().apply {
-        orderedItems().ordered = false
-    },
-    val anyOf: OrderedSet<ComponentManager<*>> = OrderedSet<ComponentManager<*>>().apply {
-        orderedItems().ordered = false
-    }
+    private val allOf: OrderedSet<ComponentManager<*>>,
+    private val noneOf: OrderedSet<ComponentManager<*>>,
+    private val anyOf: OrderedSet<ComponentManager<*>>
 ) : ComponentListener {
     private val entities: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
         orderedItems().ordered = false
@@ -92,6 +109,8 @@ data class Family(
             }
         }
     }
+
+    fun sort(comparator: Comparator<in Int>) = entities.orderedItems().sort(comparator)
 
     fun iterate(action: (Int) -> Unit) {
         iterating = true

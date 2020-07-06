@@ -1,7 +1,12 @@
 package com.github.quillraven.kecs.benchmark
 
-import com.badlogic.ashley.core.*
+import com.badlogic.ashley.core.Component
+import com.badlogic.ashley.core.ComponentMapper
+import com.badlogic.ashley.core.Entity
+import com.badlogic.ashley.core.Family
+import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.ashley.systems.IteratingSystem
+import com.badlogic.ashley.systems.SortedIteratingSystem
 import com.badlogic.gdx.utils.Pool
 import com.github.quillraven.kecs.ComponentManager
 import com.github.quillraven.kecs.World
@@ -26,8 +31,18 @@ class AshleyComponent2 : Component, Pool.Poolable {
     override fun reset() = Unit
 }
 
-class AshleyComponent3 : Component, Pool.Poolable {
-    override fun reset() = Unit
+class AshleyComponent3 : Component, Pool.Poolable, Comparable<AshleyComponent3> {
+    var counter = 0
+
+    override fun reset() {
+        counter = 0
+    }
+
+    override fun compareTo(other: AshleyComponent3) = counter.compareTo(other.counter)
+
+    companion object {
+        val mapper = ComponentMapper.getFor(AshleyComponent3::class.java)
+    }
 }
 
 class KECSComponent1 {
@@ -37,7 +52,11 @@ class KECSComponent1 {
 
 class KECSComponent2
 
-class KECSComponent3
+class KECSComponent3 : Comparable<KECSComponent3> {
+    var counter = 0
+
+    override fun compareTo(other: KECSComponent3) = counter.compareTo(other.counter)
+}
 
 class AshleyIteratingSystemSimple : IteratingSystem(Family.all(AshleyComponent1::class.java).get()) {
     private val mapper = ComponentMapper.getFor(AshleyComponent1::class.java)
@@ -64,15 +83,22 @@ class AshleyIteratingSystemComplex1 : IteratingSystem(
         } else {
             entity?.remove(AshleyComponent1::class.java)
         }
+        AshleyComponent3.mapper.get(entity).counter++
         ++counter
     }
 }
 
-class AshleyIteratingSystemComplex2 : IteratingSystem(
+class AshleyIteratingSystemComplex2 : SortedIteratingSystem(
     Family
         .one(AshleyComponent1::class.java, AshleyComponent2::class.java, AshleyComponent3::class.java)
-        .get()
+        .get(),
+    compareBy { AshleyComponent3.mapper.get(it) }
 ) {
+    override fun update(deltaTime: Float) {
+        forceSort()
+        super.update(deltaTime)
+    }
+
     override fun processEntity(entity: Entity?, deltaTime: Float) {
         entity?.remove(AshleyComponent2::class.java)
         entity?.add(engine.createComponent(AshleyComponent1::class.java))
@@ -93,7 +119,8 @@ class KECSIteratingSystemSimple(
 class KECSIteratingSystemComplex1(
     world: World,
     private val manager1: ComponentManager<KECSComponent1> = world.componentManager(),
-    private val manager2: ComponentManager<KECSComponent2> = world.componentManager()
+    private val manager2: ComponentManager<KECSComponent2> = world.componentManager(),
+    private val manager3: ComponentManager<KECSComponent3> = world.componentManager()
 ) : com.github.quillraven.kecs.IteratingSystem(
     world.family {
         allOf(KECSComponent1::class)
@@ -110,6 +137,7 @@ class KECSIteratingSystemComplex1(
         } else {
             manager1.deregister(entityID)
         }
+        manager3[entityID].counter++
         ++counter
     }
 }
@@ -117,12 +145,20 @@ class KECSIteratingSystemComplex1(
 class KECSIteratingSystemComplex2(
     world: World,
     private val manager1: ComponentManager<KECSComponent1> = world.componentManager(),
-    private val manager2: ComponentManager<KECSComponent2> = world.componentManager()
+    private val manager2: ComponentManager<KECSComponent2> = world.componentManager(),
+    private val manager3: ComponentManager<KECSComponent3> = world.componentManager()
 ) : com.github.quillraven.kecs.IteratingSystem(
     world.family {
         anyOf(KECSComponent1::class, KECSComponent2::class, KECSComponent3::class)
     }
 ) {
+    private val comparator = compareBy<Int> { manager3[it] }
+
+    override fun update(world: World, deltaTime: Float) {
+        sort(comparator)
+        super.update(world, deltaTime)
+    }
+
     override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
         manager2.deregister(entityID)
         manager1.register(entityID)
