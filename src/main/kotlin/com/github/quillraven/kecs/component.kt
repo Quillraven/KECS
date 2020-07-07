@@ -5,8 +5,8 @@ import com.badlogic.gdx.utils.OrderedSet
 import kotlin.math.max
 
 interface ComponentListener {
-    fun componentAdded(entityID: Int, manager: ComponentManager<*>) = Unit
-    fun componentRemoved(entityID: Int, manager: ComponentManager<*>) = Unit
+    fun componentAdded(entityID: Int, manager: ComponentManager<*>)
+    fun componentRemoved(entityID: Int, manager: ComponentManager<*>)
 }
 
 class ComponentManager<T>(
@@ -50,9 +50,9 @@ class ComponentManager<T>(
 
     fun deregister(entityID: Int) {
         if (components[entityID] != null) {
-            listeners.forEach { it.componentRemoved(entityID, this) }
             freeComponents.add(components[entityID])
             components[entityID] = null
+            listeners.forEach { it.componentRemoved(entityID, this) }
         }
     }
 
@@ -65,6 +65,10 @@ class ComponentManager<T>(
     fun addListener(listener: ComponentListener) = listeners.add(listener)
 
     fun removeListener(listener: ComponentListener) = listeners.remove(listener)
+
+    operator fun contains(listener: ComponentListener) = listeners.contains(listener)
+
+    override fun entityAdded(entityID: Int) = Unit
 
     override fun entityRemoved(entityID: Int) = deregister(entityID)
 }
