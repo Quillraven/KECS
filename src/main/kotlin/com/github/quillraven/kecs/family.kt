@@ -50,7 +50,7 @@ class FamilyBuilder(
         noneOf.forEach { it.addListener(family) }
         anyOf.forEach { it.addListener(family) }
         families.add(family)
-        return families.get(family)
+        return family
     }
 }
 
@@ -116,12 +116,15 @@ data class Family(
         iterating = true
         entities.forEach { action(it) }
         iterating = false
-        entityUpdateOperations.forEach { entry ->
-            if (entry.value == EntityUpdateOperation.ADD) {
-                entities.add(entry.key)
-            } else {
-                entities.remove(entry.key)
+        if (!entityUpdateOperations.isEmpty) {
+            entityUpdateOperations.forEach { entry ->
+                if (entry.value == EntityUpdateOperation.ADD) {
+                    entities.add(entry.key)
+                } else {
+                    entities.remove(entry.key)
+                }
             }
+            entityUpdateOperations.clear()
         }
     }
 }
