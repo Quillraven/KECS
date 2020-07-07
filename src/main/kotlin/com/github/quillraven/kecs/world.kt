@@ -3,6 +3,7 @@ package com.github.quillraven.kecs
 import com.badlogic.gdx.utils.IntArray
 import com.badlogic.gdx.utils.ObjectMap
 import com.badlogic.gdx.utils.OrderedSet
+import kotlin.math.max
 
 interface EntityListener {
     fun entityAdded(entityID: Int)
@@ -15,6 +16,8 @@ class World(val initialEntityCapacity: Int) {
             add(-1)
         }
     }
+    val size: Int
+        get() = entities.size
     private val freeIDs = IntArray(false, initialEntityCapacity)
     private var nextEntityID = 0
     private val componentManagers = ObjectMap<Class<*>, ComponentManager<*>>()
@@ -31,6 +34,13 @@ class World(val initialEntityCapacity: Int) {
     fun entity(): Int {
         val entity = when {
             freeIDs.isEmpty -> {
+                if (nextEntityID >= entities.size) {
+                    // initial entity capacity exceeded -> resize by 75%
+                    repeat(max(1, (nextEntityID * 0.75f).toInt())) {
+                        entities.add(-1)
+                    }
+                }
+
                 entities[nextEntityID] = nextEntityID++
                 nextEntityID - 1
             }
@@ -82,6 +92,8 @@ class World(val initialEntityCapacity: Int) {
     fun systems(vararg system: System) {
         system.forEach { systems.add(it) }
     }
+
+    operator fun contains(system: System) = systems.contains(system)
 
     fun update(deltaTime: Float) {
         systems.forEach { system ->
