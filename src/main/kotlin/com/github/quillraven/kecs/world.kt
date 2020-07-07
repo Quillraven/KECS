@@ -5,8 +5,8 @@ import com.badlogic.gdx.utils.ObjectMap
 import com.badlogic.gdx.utils.OrderedSet
 
 interface EntityListener {
-    fun entityAdded(entityID: Int) = Unit
-    fun entityRemoved(entityID: Int) = Unit
+    fun entityAdded(entityID: Int)
+    fun entityRemoved(entityID: Int)
 }
 
 class World(val initialEntityCapacity: Int) {
@@ -27,7 +27,6 @@ class World(val initialEntityCapacity: Int) {
     private val families = OrderedSet<Family>().apply {
         orderedItems().ordered = false
     }
-    private val familyBuilder = FamilyBuilder(this, families)
 
     fun entity(): Int {
         val entity = when {
@@ -76,7 +75,7 @@ class World(val initialEntityCapacity: Int) {
 
     operator fun contains(listener: EntityListener) = listeners.contains(listener)
 
-    fun family(init: FamilyBuilder.() -> (Unit)) = familyBuilder.apply(init).build()
+    fun family(init: FamilyBuilder.() -> (Unit)) = FamilyBuilder(this, this.families).apply(init).build()
 
     operator fun contains(family: Family) = families.contains(family)
 
