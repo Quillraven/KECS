@@ -2,12 +2,7 @@ package com.github.quillraven.kecs
 
 import com.github.quillraven.kecs.component.TestComponentListener
 import com.github.quillraven.kecs.component.TransformComponent
-import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should be instance of`
-import org.amshove.kluent.`should be`
-import org.amshove.kluent.`should not be equal to`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
+import org.amshove.kluent.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -88,8 +83,7 @@ object ComponentSpec : Spek({
             }
 
             it("should add the listener to the listeners list") {
-                listener.addCalls `should be equal to` listener2.addCalls
-                listener.removeCalls `should be equal to` listener2.removeCalls
+                (listener2 in manager) `should be equal to` true
             }
         }
 
@@ -112,8 +106,7 @@ object ComponentSpec : Spek({
             }
 
             it("should remove the listener from the listeners list") {
-                listener.addCalls `should not be equal to` listener2.addCalls
-                listener.removeCalls `should not be equal to` listener2.removeCalls
+                (listener2 in manager) `should be equal to` false
             }
         }
 

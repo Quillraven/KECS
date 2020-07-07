@@ -1,10 +1,6 @@
 package com.github.quillraven.kecs.benchmark
 
-import com.badlogic.ashley.core.Component
-import com.badlogic.ashley.core.ComponentMapper
-import com.badlogic.ashley.core.Entity
-import com.badlogic.ashley.core.Family
-import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.ashley.core.*
 import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.ashley.systems.SortedIteratingSystem
 import com.badlogic.gdx.utils.Pool
@@ -41,7 +37,7 @@ class AshleyComponent3 : Component, Pool.Poolable, Comparable<AshleyComponent3> 
     override fun compareTo(other: AshleyComponent3) = counter.compareTo(other.counter)
 
     companion object {
-        val mapper = ComponentMapper.getFor(AshleyComponent3::class.java)
+        val mapper: ComponentMapper<AshleyComponent3> = ComponentMapper.getFor(AshleyComponent3::class.java)
     }
 }
 

@@ -10,6 +10,10 @@ class TransformComponent {
 
 class PlayerComponent
 
+class PhysiqueComponent
+
+class RenderComponent
+
 class TestComponentListener : ComponentListener {
     var addCalls = 0
     var removeCalls = 0
