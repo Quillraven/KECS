@@ -37,7 +37,9 @@ class AshleyComponent3 : Component, Pool.Poolable, Comparable<AshleyComponent3> 
     override fun compareTo(other: AshleyComponent3) = counter.compareTo(other.counter)
 
     companion object {
-        val mapper: ComponentMapper<AshleyComponent3> = ComponentMapper.getFor(AshleyComponent3::class.java)
+        val mapper: ComponentMapper<AshleyComponent3> = ComponentMapper.getFor(
+            AshleyComponent3::class.java
+        )
     }
 }
 
@@ -250,7 +252,10 @@ private fun benchmarkComplexIteration() {
 }
 
 private fun benchmarkAshleyCreate() {
-    val engine = PooledEngine(NUM_ENTITIES, NUM_ENTITIES, 16, 16)
+    val engine = PooledEngine(
+        NUM_ENTITIES,
+        NUM_ENTITIES, 16, 16
+    )
     repeat(NUM_ENTITIES) {
         engine.addEntity(engine.createEntity().apply {
             this.add(engine.createComponent(AshleyComponent1::class.java))
@@ -259,7 +264,10 @@ private fun benchmarkAshleyCreate() {
 }
 
 private fun benchmarkAshleyCreateAndRemove() {
-    val engine = PooledEngine(NUM_ENTITIES, NUM_ENTITIES, 16, 16)
+    val engine = PooledEngine(
+        NUM_ENTITIES,
+        NUM_ENTITIES, 16, 16
+    )
     repeat(NUM_ENTITIES) {
         engine.addEntity(engine.createEntity().apply {
             this.add(engine.createComponent(AshleyComponent1::class.java))
@@ -271,7 +279,10 @@ private fun benchmarkAshleyCreateAndRemove() {
 }
 
 private fun benchmarkAshleySimpleIteration() {
-    val engine = PooledEngine(NUM_ENTITIES, NUM_ENTITIES, 16, 16)
+    val engine = PooledEngine(
+        NUM_ENTITIES,
+        NUM_ENTITIES, 16, 16
+    )
     engine.addSystem(AshleyIteratingSystemSimple())
     repeat(NUM_ENTITIES) {
         engine.addEntity(engine.createEntity().apply {
@@ -284,7 +295,10 @@ private fun benchmarkAshleySimpleIteration() {
 }
 
 private fun benchmarkAshleyComplexIteration() {
-    val engine = PooledEngine(NUM_ENTITIES, NUM_ENTITIES, 16, 16)
+    val engine = PooledEngine(
+        NUM_ENTITIES,
+        NUM_ENTITIES, 16, 16
+    )
     engine.addSystem(AshleyIteratingSystemComplex1())
     engine.addSystem(AshleyIteratingSystemComplex2())
     repeat(NUM_ENTITIES) {
