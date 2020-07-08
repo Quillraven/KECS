@@ -268,12 +268,16 @@ object WorldSpec : Spek({
                     active = false
                 }
                 world.systems(system1, system2)
-                world.update(1 / 60f)
+                world.update(1f)
             }
 
             it("should call update of each active system") {
                 system1.updateCalls `should be equal to` 1
                 system2.updateCalls `should be equal to` 0
+            }
+
+            it("should call update of a system with the given deltaTime") {
+                system1.lastUpdateDeltaTime `should be equal to` 1f
             }
         }
     }
