@@ -204,22 +204,27 @@ object FamilySpec : Spek({
                 world.componentManager<RenderComponent>().register(entityID)
                 world.componentManager<PhysiqueComponent>().register(entityID)
                 val manager = world.componentManager<PlayerComponent>()
+                // valid iteration
                 family.iterate {
                     manager.register(it)
                     world.componentManager<TransformComponent>()[it].x++
                 }
+                // invalid iteration
                 family.iterate {
                     world.componentManager<TransformComponent>()[it].x++
                 }
                 manager.deregister(entityID)
+                // valid iteration
                 family.iterate {
                     world.componentManager<TransformComponent>()[it].x++
                 }
+                // valid iteration
                 family.iterate {
                     manager.register(it)
                     manager.deregister(it)
                     world.componentManager<TransformComponent>()[it].x++
                 }
+                // valid iteration
                 family.iterate {
                     world.componentManager<TransformComponent>()[it].x++
                 }

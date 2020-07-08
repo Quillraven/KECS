@@ -117,14 +117,16 @@ data class Family(
         entities.forEach { action(it) }
         iterating = false
         if (!entityUpdateOperations.isEmpty) {
-            entityUpdateOperations.forEach { entry ->
+            val iterator = entityUpdateOperations.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
                 if (entry.value == EntityUpdateOperation.ADD) {
                     entities.add(entry.key)
                 } else {
                     entities.remove(entry.key)
                 }
+                iterator.remove()
             }
-            entityUpdateOperations.clear()
         }
     }
 }
