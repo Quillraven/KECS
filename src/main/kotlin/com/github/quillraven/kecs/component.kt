@@ -1,163 +1,74 @@
 package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
-import com.badlogic.gdx.utils.IdentityMap
-import com.badlogic.gdx.utils.Pool
-import com.badlogic.gdx.utils.ReflectionPool
-import java.util.*
+import com.badlogic.gdx.utils.OrderedSet
 import kotlin.math.max
-import kotlin.reflect.KClass
 
-/**
- * Common interface of any component of the entity component system.
- * Any component class must have a constructor with no arguments to be
- * able to be [poolable][Pool.Poolable].
- */
-interface KECSComponent : Pool.Poolable
+interface ComponentListener {
+    fun componentAdded(entityID: Int, manager: ComponentManager<*>)
+    fun componentRemoved(entityID: Int, manager: ComponentManager<*>)
+}
 
-data class KECSComponentMapper<T : KECSComponent>(val id: Int, val type: KClass<T>)
+class ComponentManager<T>(
+    entityCapacity: Int,
+    val type: Class<T>
+) : EntityListener {
+    private val components = Array<T>(false, entityCapacity).apply {
+        repeat(entityCapacity) {
+            add(null)
+        }
+    }
+    private val freeComponents = Array<T>(false, entityCapacity)
+    private val listeners = OrderedSet<ComponentListener>().apply {
+        orderedItems().ordered = false
+    }
+    val size: Int
+        get() = components.size
 
-class KECSComponentManager(
-    initialEntityCapacity: Int,
-    initialComponentCapacity: Int
-) : KECSEntityListener {
-    val componentPools = IdentityMap<KClass<out KECSComponent>, ReflectionPool<out KECSComponent>>()
-    val entityComponents = Array<Array<KECSComponent>>(false, initialEntityCapacity).apply {
-        // fill array with null values to correctly set the size and to be able to call "set(index,value)"
-        repeat(initialEntityCapacity) {
-            val components = Array<KECSComponent>(false, initialComponentCapacity)
-            this.add(components)
-            repeat(initialComponentCapacity) {
+    fun register(entityID: Int): T {
+        if (entityID >= components.size) {
+            // initial entity capacity exceeded -> resize by 75%
+            repeat(max(1, (entityID * 0.75f).toInt())) {
                 components.add(null)
             }
         }
-    }
-    val entityComponentBits = Array<BitSet>(false, initialEntityCapacity).apply {
-        // fill array with null values to correctly set the size and to be able to call "set(index,value)"
-        repeat(initialEntityCapacity) {
-            this.add(null)
-        }
-    }
-    val componentMappers = IdentityMap<KClass<out KECSComponent>, KECSComponentMapper<out KECSComponent>>()
 
-    inline fun <reified T : KECSComponent> obtain(): T = obtain(T::class) as T
-
-    fun <T : KECSComponent> obtain(type: KClass<T>): KECSComponent {
-        if (!componentPools.containsKey(type)) {
-            componentPools.put(type, ReflectionPool(type.java))
-        }
-        return componentPools[type].obtain()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun <T : KECSComponent> free(component: T) {
-        (componentPools[component::class] as ReflectionPool<T>).free(component)
-    }
-
-    private fun mapper(component: KECSComponent) = mapper(component::class)
-
-    inline fun <reified T : KECSComponent> mapper() = mapper(T::class)
-
-    @Suppress("UNCHECKED_CAST")
-    fun <T : KECSComponent> mapper(type: KClass<T>): KECSComponentMapper<T> {
-        if (!componentMappers.containsKey(type)) {
-            componentMappers.put(type, KECSComponentMapper(componentMappers.size, type))
-        }
-        return componentMappers[type] as KECSComponentMapper<T>
-    }
-
-    // slow version
-    fun add(entity: KECSEntity, component: KECSComponent) = add(entity, mapper(component), component)
-
-    // fast version
-    fun add(entity: KECSEntity, mapper: KECSComponentMapper<out KECSComponent>, component: KECSComponent) {
-        val components = entityComponents[entity.id]
-        if (mapper.id >= components.size) {
-            // component array is not big enough to store the new component
-            // -> resize by 75% and fill it up again with null values
-            repeat(max(1, (components.size * 0.75f).toInt())) {
-                components.add(null)
-                entityComponentBits.add(null)
+        if (components[entityID] == null) {
+            when {
+                freeComponents.isEmpty -> {
+                    components[entityID] = type.newInstance()
+                }
+                else -> {
+                    components[entityID] = freeComponents.removeIndex(freeComponents.size - 1)
+                }
             }
+            listeners.forEach { it.componentAdded(entityID, this) }
         }
 
-        if (components.get(mapper.id) == null) {
-            components.set(mapper.id, component)
-            if (entityComponentBits[entity.id] == null) {
-                entityComponentBits[entity.id] = BitSet()
-            }
-            entityComponentBits[entity.id].set(mapper.id)
-        } else {
-            throw KECSComponentAlreadyExistingException(entity, mapper.type)
+        return components[entityID]
+    }
+
+    fun deregister(entityID: Int) {
+        if (components[entityID] != null) {
+            freeComponents.add(components[entityID])
+            components[entityID] = null
+            listeners.forEach { it.componentRemoved(entityID, this) }
         }
     }
 
-    // slow version
-    fun remove(entity: KECSEntity, component: KECSComponent) = remove(entity, mapper(component), component)
+    operator fun contains(entityID: Int) = components[entityID] != null
 
-    // fast version
-    private fun remove(entity: KECSEntity, mapper: KECSComponentMapper<out KECSComponent>, component: KECSComponent) {
-        entityComponents[entity.id].set(mapper.id, null)
-        free(component)
-        entityComponentBits[entity.id].clear(mapper.id)
-    }
+    operator fun get(entityID: Int): T =
+        components[entityID]
+            ?: throw MissingComponentException(entityID, type)
 
-    // slow version
-    inline fun <reified T : KECSComponent> get(entity: KECSEntity) = get(entity, mapper(T::class)) as T
+    fun addListener(listener: ComponentListener) = listeners.add(listener)
 
-    // fast version
-    inline fun <reified T : KECSComponent> get(entity: KECSEntity, mapper: KECSComponentMapper<out KECSComponent>): T {
-        val component = entityComponents[entity.id][mapper.id]
-        if (component != null) {
-            return entityComponents[entity.id][mapper.id] as T
-        } else {
-            throw KECSMissingComponentException(entity, mapper.type)
-        }
-    }
+    fun removeListener(listener: ComponentListener) = listeners.remove(listener)
 
-    // fast version --> this version is only needed for EntityUpdateDSL
-    fun <T : KECSComponent> get(
-        type: KClass<T>,
-        entity: KECSEntity,
-        mapper: KECSComponentMapper<out KECSComponent>
-    ): KECSComponent {
-        if (type != mapper.type) {
-            throw ClassCastException("Cannot cast component mapper type ${mapper.type} to $type")
-        }
+    operator fun contains(listener: ComponentListener) = listeners.contains(listener)
 
-        val component = entityComponents[entity.id][mapper.id]
-        if (component != null) {
-            return entityComponents[entity.id][mapper.id]
-        } else {
-            throw KECSMissingComponentException(entity, mapper.type)
-        }
-    }
+    override fun entityAdded(entityID: Int) = Unit
 
-    override fun entityAdded(entity: KECSEntity) {
-        if (entityComponentBits[entity.id] == null) {
-            entityComponentBits[entity.id] = BitSet()
-        }
-    }
-
-    override fun entityRemoved(entity: KECSEntity) {
-        entityComponents[entity.id].forEachIndexed { index, component ->
-            if (component != null) {
-                free(component)
-            }
-            entityComponents[entity.id].set(index, null)
-        }
-        entityComponentBits[entity.id].clear()
-    }
-
-    override fun entityResize(newSize: Int) {
-        repeat(newSize - entityComponents.size) {
-            val size = entityComponents[0].size
-            val components = Array<KECSComponent>(false, size)
-            entityComponents.add(components)
-            repeat(size) {
-                components.add(null)
-            }
-            entityComponentBits.add(null)
-        }
-    }
+    override fun entityRemoved(entityID: Int) = deregister(entityID)
 }
