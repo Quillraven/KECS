@@ -24,7 +24,7 @@ class World(val initialEntityCapacity: Int) {
     private val listeners = OrderedSet<EntityListener>().apply {
         orderedItems().ordered = false
     }
-    private val systems = OrderedSet<System>().apply {
+    val systems = OrderedSet<System>().apply {
         orderedItems().ordered = false
     }
     private val families = OrderedSet<Family>().apply {
@@ -92,6 +92,8 @@ class World(val initialEntityCapacity: Int) {
     fun systems(vararg system: System) {
         system.forEach { systems.add(it) }
     }
+
+    inline fun <reified T : System> system() = systems.filterIsInstance<T>().first()
 
     operator fun contains(system: System) = systems.contains(system)
 

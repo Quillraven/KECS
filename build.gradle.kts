@@ -33,6 +33,7 @@ dependencies {
     testRuntimeOnly("org.jetbrains.kotlin:kotlin-reflect:${project.property("kotlinVersion")}")
 
     configurations["benchmarkImplementation"]("com.badlogicgames.ashley:ashley:1.7.3")
+    configurations["benchmarkImplementation"]("net.onedaybeard.artemis:artemis-odb:2.3.0")
 }
 
 tasks {
