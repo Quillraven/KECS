@@ -26,8 +26,8 @@ import kotlin.system.measureTimeMillis
 
 abstract class Benchmark(
     val numEntities: Int = 10000,
-    numWarmUps: Int = 1,
-    numRuns: Int = 1,
+    numWarmUps: Int = 3,
+    numRuns: Int = 10,
     val simpleIterations: Int = 1000,
     val complexIterations: Int = 100
 ) {
