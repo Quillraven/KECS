@@ -37,7 +37,7 @@ object BenchmarkArtemis : Benchmark() {
         }
     }
 
-    override fun complex() {
+    override fun complex(verify: Boolean): Boolean {
         val world = World(WorldConfigurationBuilder().run {
             with(ArtemisIteratingSystemComplex1())
             with(ArtemisIteratingSystemComplex2())
@@ -53,5 +53,21 @@ object BenchmarkArtemis : Benchmark() {
             world.delta = 1f
             world.process()
         }
+
+        if (verify) {
+            for (id in 0 until numEntities) {
+                val entity = world.getEntity(id)
+                val cmp1X = entity.getComponent(ArtemisComponent1::class.java).x
+                val cmp2 = entity.getComponent(ArtemisComponent2::class.java)
+                val cmp3Counter = entity.getComponent(ArtemisComponent3::class.java).counter
+                if (id % 2 == 0 && (cmp1X != complexIterations || cmp2 != null || cmp3Counter != complexIterations)) {
+                    return false
+                } else if (id % 2 == 1 && (cmp1X != 0 || cmp2 != null || cmp3Counter != complexIterations)) {
+                    return false
+                }
+            }
+            return true
+        }
+        return true
     }
 }
