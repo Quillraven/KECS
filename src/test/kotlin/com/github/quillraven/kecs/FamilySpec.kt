@@ -96,7 +96,7 @@ object FamilySpec : Spek({
     describe("A Family") {
         describe("Adding a valid component configuration to an entity") {
             lateinit var family: Family
-            val entityID = 0
+            var entityID = -1
             beforeEachTest {
                 FamilyBuilder(world, familyCache).run {
                     allOf(TransformComponent::class, RenderComponent::class)
@@ -104,6 +104,7 @@ object FamilySpec : Spek({
                     anyOf(PhysiqueComponent::class)
                     family = build()
                 }
+                entityID = world.entity()
                 world.componentManager<TransformComponent>().register(entityID)
                 world.componentManager<RenderComponent>().register(entityID)
                 world.componentManager<PhysiqueComponent>().register(entityID)
@@ -120,8 +121,8 @@ object FamilySpec : Spek({
 
         describe("Adding an invalid component configuration to an existing entity") {
             lateinit var family: Family
-            val entityID1 = 0
-            val entityID2 = 1
+            var entityID1 = -1
+            var entityID2 = -1
             beforeEachTest {
                 FamilyBuilder(world, familyCache).run {
                     allOf(TransformComponent::class, RenderComponent::class)
@@ -129,6 +130,8 @@ object FamilySpec : Spek({
                     anyOf(PhysiqueComponent::class)
                     family = build()
                 }
+                entityID1 = world.entity()
+                entityID2 = world.entity()
                 world.componentManager<TransformComponent>().register(entityID1)
                 world.componentManager<RenderComponent>().register(entityID1)
                 world.componentManager<PhysiqueComponent>().register(entityID1)
@@ -155,44 +158,9 @@ object FamilySpec : Spek({
             }
         }
 
-        describe("Sorting a family") {
-            lateinit var family: Family
-            lateinit var manager: ComponentManager<TransformComponent>
-            val entity1 = 0
-            val entity2 = 1
-            val entity3 = 2
-            beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
-                    allOf(TransformComponent::class)
-                    family = build()
-                }
-
-                manager = world.componentManager()
-                manager.register(entity1)
-                manager[entity1].x = 300
-                manager.register(entity2)
-                manager[entity2].x = 200
-                manager.register(entity3)
-                manager[entity3].x = 100
-                family.sort(
-                    compareBy { manager[it].x }
-                )
-                var idx = 0
-                family.iterate {
-                    manager[it].y = idx++
-                }
-            }
-
-            it("should sort the family's entities") {
-                manager[entity1].y = 2
-                manager[entity2].y = 1
-                manager[entity3].y = 0
-            }
-        }
-
         describe("Adding and Removing components while iterating over a family") {
             lateinit var family: Family
-            val entityID = 0
+            var entityID = -1
             beforeEachTest {
                 FamilyBuilder(world, familyCache).run {
                     allOf(TransformComponent::class, RenderComponent::class)
@@ -200,6 +168,7 @@ object FamilySpec : Spek({
                     anyOf(PhysiqueComponent::class)
                     family = build()
                 }
+                entityID = world.entity()
                 world.componentManager<TransformComponent>().register(entityID)
                 world.componentManager<RenderComponent>().register(entityID)
                 world.componentManager<PhysiqueComponent>().register(entityID)

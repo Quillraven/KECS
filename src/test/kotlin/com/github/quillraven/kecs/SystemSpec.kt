@@ -34,28 +34,5 @@ object SystemSpec : Spek({
                 iteratingSystem.lastUpdateEntityDeltaTime `should be equal to` 1f
             }
         }
-
-        describe("Sorting an IteratingSystem") {
-            var entity1 = -1
-            var entity2 = -1
-            lateinit var manager: ComponentManager<TransformComponent>
-            beforeEachTest {
-                manager = world.componentManager()
-                entity1 = world.entity()
-                entity2 = world.entity()
-                world.systems(iteratingSystem)
-                manager.register(entity1)
-                manager.register(entity2)
-                manager[entity1].y = 2
-                manager[entity2].y = 1
-                iteratingSystem.sort(compareBy { manager[it].y })
-                iteratingSystem.update(world, 1f)
-            }
-
-            it("should sort the entities of the family") {
-                manager[entity1].x `should be equal to` 2
-                manager[entity2].x `should be equal to` 1
-            }
-        }
     }
 })

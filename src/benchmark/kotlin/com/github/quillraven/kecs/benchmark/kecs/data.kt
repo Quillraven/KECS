@@ -1,6 +1,7 @@
 package com.github.quillraven.kecs.benchmark.kecs
 
 import com.github.quillraven.kecs.ComponentManager
+import com.github.quillraven.kecs.IteratingSystem
 import com.github.quillraven.kecs.World
 
 // Component that is used for accessing component data benchmarks
@@ -37,14 +38,14 @@ class KECSIteratingSystemComplex1(
     private val manager1: ComponentManager<KECSComponent1> = world.componentManager(),
     private val manager2: ComponentManager<KECSComponent2> = world.componentManager(),
     private val manager3: ComponentManager<KECSComponent3> = world.componentManager()
-) : com.github.quillraven.kecs.IteratingSystem(
+) : IteratingSystem(
     world.family {
         allOf(KECSComponent1::class)
         noneOf(KECSComponent2::class)
         anyOf(KECSComponent3::class)
     }
 ) {
-    var updateEntityCalls = 0
+    private var updateEntityCalls = 0
 
     override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
         if (updateEntityCalls % 2 == 0) {
@@ -63,24 +64,14 @@ class KECSIteratingSystemComplex1(
 class KECSIteratingSystemComplex2(
     world: World,
     private val manager1: ComponentManager<KECSComponent1> = world.componentManager(),
-    private val manager2: ComponentManager<KECSComponent2> = world.componentManager(),
-    private val manager3: ComponentManager<KECSComponent3> = world.componentManager()
-) : com.github.quillraven.kecs.IteratingSystem(
+    private val manager2: ComponentManager<KECSComponent2> = world.componentManager()
+) : IteratingSystem(
     world.family {
         anyOf(KECSComponent1::class, KECSComponent2::class, KECSComponent3::class)
     }
 ) {
-    private val comparator = compareBy<Int> { manager3[it] }
-    var updateEntityCalls = 0
-
-    override fun update(world: World, deltaTime: Float) {
-        sort(comparator)
-        super.update(world, deltaTime)
-    }
-
     override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
         manager2.deregister(entityID)
         manager1.register(entityID)
-        ++updateEntityCalls
     }
 }

@@ -1,8 +1,8 @@
 package com.github.quillraven.kecs
 
-import com.badlogic.gdx.utils.IntMap
 import com.badlogic.gdx.utils.ObjectSet
 import com.badlogic.gdx.utils.OrderedSet
+import java.util.*
 import kotlin.reflect.KClass
 
 @DslMarker
@@ -42,7 +42,16 @@ class FamilyBuilder(
     }
 
     fun build(): Family {
-        val family = Family(world, allOf, noneOf, anyOf)
+        val allBitSet = BitSet().apply {
+            allOf.forEach { this.set(it.id) }
+        }
+        val noneBitSet = BitSet().apply {
+            noneOf.forEach { this.set(it.id) }
+        }
+        val anyBitSet = BitSet().apply {
+            anyOf.forEach { this.set(it.id) }
+        }
+        val family = Family(world, allBitSet, noneBitSet, anyBitSet)
         if (families.contains(family)) {
             return families.get(family)
         }
@@ -54,79 +63,61 @@ class FamilyBuilder(
     }
 }
 
-private enum class EntityUpdateOperation {
-    ADD, REMOVE
-}
-
 data class Family(
     private val world: World,
-    private val allOf: OrderedSet<ComponentManager<*>>,
-    private val noneOf: OrderedSet<ComponentManager<*>>,
-    private val anyOf: OrderedSet<ComponentManager<*>>
+    private val allOf: BitSet,
+    private val noneOf: BitSet,
+    private val anyOf: BitSet
 ) : ComponentListener {
-    private val entities: OrderedSet<Int> = OrderedSet<Int>(world.initialEntityCapacity).apply {
-        orderedItems().ordered = false
-    }
-    private val entityUpdateOperations = IntMap<EntityUpdateOperation>(world.initialEntityCapacity)
-    private var iterating = false
+    private val entities = BitSet(world.initialEntityCapacity)
 
     operator fun contains(entityID: Int): Boolean {
-        allOf.forEach { manager ->
-            if (entityID !in manager) {
-                return false
+        val components = world.components(entityID)
+
+        if (allOf.cardinality() > 0) {
+            var idx = allOf.nextSetBit(0)
+            while (idx >= 0) {
+                if (!components[idx]) {
+                    return false
+                }
+
+                if (idx == Integer.MAX_VALUE) {
+                    break // or (idx+1) would overflow
+                }
+                idx = allOf.nextSetBit(idx + 1)
             }
         }
 
-        noneOf.forEach { manager ->
-            if (entityID in manager) {
-                return false
-            }
+        if (noneOf.cardinality() > 0 && noneOf.intersects(components)) {
+            return false
         }
 
-        anyOf.forEach { manager ->
-            if (entityID in manager) {
-                return true
-            }
+        if (anyOf.cardinality() > 0 && !anyOf.intersects(components)) {
+            return false
         }
 
-        return anyOf.isEmpty
+        return true
     }
 
     override fun componentAdded(entityID: Int, manager: ComponentManager<*>) = componentRemoved(entityID, manager)
 
     override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) {
         if (entityID in this) {
-            if (iterating) {
-                entityUpdateOperations.put(entityID, EntityUpdateOperation.ADD)
-            } else {
-                entities.add(entityID)
-            }
+            entities.set(entityID)
         } else {
-            if (iterating) {
-                entityUpdateOperations.put(entityID, EntityUpdateOperation.REMOVE)
-            } else {
-                entities.remove(entityID)
-            }
+            entities.clear(entityID)
         }
     }
 
-    fun sort(comparator: Comparator<in Int>) = entities.orderedItems().sort(comparator)
-
     fun iterate(action: (Int) -> Unit) {
-        iterating = true
-        entities.forEach { action(it) }
-        iterating = false
-        if (!entityUpdateOperations.isEmpty) {
-            val iterator = entityUpdateOperations.iterator()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                if (entry.value == EntityUpdateOperation.ADD) {
-                    entities.add(entry.key)
-                } else {
-                    entities.remove(entry.key)
-                }
-                iterator.remove()
+        var entityID = entities.nextSetBit(0)
+        while (entityID >= 0) {
+            action(entityID)
+
+            if (entityID == Integer.MAX_VALUE) {
+                break // or (entityID+1) would overflow
             }
+            entityID = entities.nextSetBit(entityID + 1)
         }
     }
 }

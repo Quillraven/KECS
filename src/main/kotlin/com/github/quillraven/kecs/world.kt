@@ -1,8 +1,10 @@
 package com.github.quillraven.kecs
 
+import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.IntArray
 import com.badlogic.gdx.utils.ObjectMap
 import com.badlogic.gdx.utils.OrderedSet
+import java.util.*
 import kotlin.math.max
 
 interface EntityListener {
@@ -16,6 +18,11 @@ class World(val initialEntityCapacity: Int) {
             add(-1)
         }
     }
+    private val entityComponents = Array<BitSet>(false, initialEntityCapacity).apply {
+        repeat(initialEntityCapacity) {
+            add(null)
+        }
+    }
     val size: Int
         get() = entities.size
     private val freeIDs = IntArray(false, initialEntityCapacity)
@@ -24,7 +31,7 @@ class World(val initialEntityCapacity: Int) {
     private val listeners = OrderedSet<EntityListener>().apply {
         orderedItems().ordered = false
     }
-    val systems = OrderedSet<System>().apply {
+    private val systems = OrderedSet<System>().apply {
         orderedItems().ordered = false
     }
     private val families = OrderedSet<Family>().apply {
@@ -38,9 +45,11 @@ class World(val initialEntityCapacity: Int) {
                     // initial entity capacity exceeded -> resize by 75%
                     repeat(max(1, (nextEntityID * 0.75f).toInt())) {
                         entities.add(-1)
+                        entityComponents.add(null)
                     }
                 }
 
+                entityComponents[nextEntityID] = BitSet(32)
                 entities[nextEntityID] = nextEntityID++
                 nextEntityID - 1
             }
@@ -62,6 +71,8 @@ class World(val initialEntityCapacity: Int) {
 
     operator fun contains(entityID: Int) = entities[entityID] != -1
 
+    fun components(entityID: Int): BitSet = entityComponents[entityID]
+
     inline fun <reified T> componentManager(): ComponentManager<T> = componentManager(T::class.java)
 
     @Suppress("UNCHECKED_CAST")
@@ -71,7 +82,7 @@ class World(val initialEntityCapacity: Int) {
                 componentManagers[type] as ComponentManager<T>
             }
             else -> {
-                val manager = ComponentManager(initialEntityCapacity, type)
+                val manager = ComponentManager(initialEntityCapacity, type, componentManagers.size, entityComponents)
                 addListener(manager)
                 componentManagers.put(type, manager)
                 manager
@@ -92,8 +103,6 @@ class World(val initialEntityCapacity: Int) {
     fun systems(vararg system: System) {
         system.forEach { systems.add(it) }
     }
-
-    inline fun <reified T : System> system() = systems.filterIsInstance<T>().first()
 
     operator fun contains(system: System) = systems.contains(system)
 

@@ -2,6 +2,7 @@ package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.OrderedSet
+import java.util.*
 import kotlin.math.max
 
 interface ComponentListener {
@@ -11,7 +12,9 @@ interface ComponentListener {
 
 class ComponentManager<T>(
     entityCapacity: Int,
-    val type: Class<T>
+    val type: Class<T>,
+    val id: Int,
+    private val entityComponents: Array<BitSet>
 ) : EntityListener {
     private val components = Array<T>(false, entityCapacity).apply {
         repeat(entityCapacity) {
@@ -42,6 +45,7 @@ class ComponentManager<T>(
                     components[entityID] = freeComponents.removeIndex(freeComponents.size - 1)
                 }
             }
+            entityComponents[entityID].set(id)
             listeners.forEach { it.componentAdded(entityID, this) }
         }
 
@@ -52,6 +56,7 @@ class ComponentManager<T>(
         if (components[entityID] != null) {
             freeComponents.add(components[entityID])
             components[entityID] = null
+            entityComponents[entityID].clear(id)
             listeners.forEach { it.componentRemoved(entityID, this) }
         }
     }

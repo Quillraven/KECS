@@ -1,6 +1,5 @@
 package com.github.quillraven.kecs.benchmark.artemis
 
-import com.artemis.BaseEntitySystem
 import com.artemis.ComponentMapper
 import com.artemis.PooledComponent
 import com.artemis.annotations.All
@@ -50,7 +49,7 @@ class ArtemisIteratingSystemSimple : IteratingSystem() {
 @Exclude(ArtemisComponent2::class)
 @One(ArtemisComponent3::class)
 class ArtemisIteratingSystemComplex1 : IteratingSystem() {
-    var processCalls = 0
+    private var processCalls = 0
     private lateinit var mapper1: ComponentMapper<ArtemisComponent1>
     private lateinit var mapper2: ComponentMapper<ArtemisComponent2>
     private lateinit var mapper3: ComponentMapper<ArtemisComponent3>
@@ -70,21 +69,12 @@ class ArtemisIteratingSystemComplex1 : IteratingSystem() {
 // System that makes an entity compatible again with the other complex system
 // Removes Component2 and adds Component1
 @One(ArtemisComponent1::class, ArtemisComponent2::class, ArtemisComponent3::class)
-class ArtemisIteratingSystemComplex2 : BaseEntitySystem() {
+class ArtemisIteratingSystemComplex2 : IteratingSystem() {
     private lateinit var mapper1: ComponentMapper<ArtemisComponent1>
     private lateinit var mapper2: ComponentMapper<ArtemisComponent2>
-    private lateinit var mapper3: ComponentMapper<ArtemisComponent3>
-    private val comparator = compareBy<Int> { mapper3[it] }
-    var processCalls = 0
 
-    override fun processSystem() {
-        val ids = subscription.entities.data
-        ids.sortedWith(comparator).forEach { process(it) }
-    }
-
-    fun process(entityId: Int) {
+    override fun process(entityId: Int) {
         mapper2.remove(entityId)
         mapper1.create(entityId)
-        ++processCalls
     }
 }

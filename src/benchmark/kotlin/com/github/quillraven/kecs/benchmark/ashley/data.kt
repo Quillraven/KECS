@@ -5,7 +5,6 @@ import com.badlogic.ashley.core.ComponentMapper
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
-import com.badlogic.ashley.systems.SortedIteratingSystem
 import com.badlogic.gdx.utils.Pool
 
 // Component that is used for accessing component data benchmarks
@@ -58,7 +57,7 @@ class AshleyIteratingSystemComplex1 : IteratingSystem(
         .one(AshleyComponent3::class.java)
         .get()
 ) {
-    var processEntityCalls = 0
+    private var processEntityCalls = 0
     private val mapper = ComponentMapper.getFor(AshleyComponent1::class.java)
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
@@ -75,22 +74,14 @@ class AshleyIteratingSystemComplex1 : IteratingSystem(
 
 // System that makes an entity compatible again with the other complex system
 // Removes Component2 and adds Component1
-class AshleyIteratingSystemComplex2 : SortedIteratingSystem(
+class AshleyIteratingSystemComplex2 : IteratingSystem(
     Family
         .one(AshleyComponent1::class.java, AshleyComponent2::class.java, AshleyComponent3::class.java)
-        .get(),
-    compareBy { AshleyComponent3.mapper.get(it) }
+        .get()
 ) {
-    var processEntityCalls = 0
-
-    override fun update(deltaTime: Float) {
-        forceSort()
-        super.update(deltaTime)
-    }
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
         entity?.remove(AshleyComponent2::class.java)
         entity?.add(engine.createComponent(AshleyComponent1::class.java))
-        ++processEntityCalls
     }
 }

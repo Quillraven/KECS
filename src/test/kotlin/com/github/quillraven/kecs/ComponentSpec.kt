@@ -1,17 +1,27 @@
 package com.github.quillraven.kecs
 
+import com.badlogic.gdx.utils.Array
 import com.github.quillraven.kecs.component.TestComponentListener
 import com.github.quillraven.kecs.component.TransformComponent
-import org.amshove.kluent.*
+import org.amshove.kluent.`should be equal to`
+import org.amshove.kluent.`should be instance of`
+import org.amshove.kluent.`should be`
+import org.amshove.kluent.`should throw`
+import org.amshove.kluent.invoking
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.util.*
 
 @Suppress("unused")
 object ComponentSpec : Spek({
     val entityCapacity = 2
     val listener by memoized { TestComponentListener() }
     val manager by memoized {
-        ComponentManager(entityCapacity, TransformComponent::class.java).apply {
+        ComponentManager(entityCapacity, TransformComponent::class.java, 0, Array<BitSet>().apply {
+            repeat(entityCapacity * 2) {
+                add(BitSet())
+            }
+        }).apply {
             addListener(listener)
         }
     }
