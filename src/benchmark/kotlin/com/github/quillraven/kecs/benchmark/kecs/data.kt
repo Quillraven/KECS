@@ -23,7 +23,7 @@ class KECSComponent3 : Comparable<KECSComponent3> {
 class KECSIteratingSystemSimple(
     world: World,
     private val manager: ComponentManager<KECSComponent1> = world.componentManager()
-) : com.github.quillraven.kecs.IteratingSystem(
+) : IteratingSystem(
     world.family { allOf(KECSComponent1::class) }
 ) {
     override fun updateEntity(entityID: Int, deltaTime: Float) {
