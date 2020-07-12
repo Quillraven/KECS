@@ -30,13 +30,13 @@ class TestIteratingSystem(
     var lastUpdateDeltaTime = 0f
     var lastUpdateEntityDeltaTime = 0f
 
-    override fun update(world: World, deltaTime: Float) {
-        super.update(world, deltaTime)
+    override fun update(deltaTime: Float) {
+        super.update(deltaTime)
         updateCalls++
         lastUpdateDeltaTime = deltaTime
     }
 
-    override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
+    override fun updateEntity(entityID: Int, deltaTime: Float) {
         updateEntityCalls++
         lastUpdateEntityDeltaTime = deltaTime
         manager[entityID].x = updateEntityCalls

@@ -12,7 +12,7 @@ interface EntityListener {
     fun entityRemoved(entityID: Int)
 }
 
-class World(val initialEntityCapacity: Int) {
+class World(private val initialEntityCapacity: Int) {
     private val entities = IntArray(false, initialEntityCapacity).apply {
         repeat(initialEntityCapacity) {
             add(-1)
@@ -69,8 +69,6 @@ class World(val initialEntityCapacity: Int) {
 
     operator fun contains(entityID: Int) = entities[entityID] != -1
 
-    fun components(entityID: Int): BitSet = entityComponents[entityID]
-
     inline fun <reified T> componentManager(): ComponentManager<T> = componentManager(T::class.java)
 
     @Suppress("UNCHECKED_CAST")
@@ -94,7 +92,8 @@ class World(val initialEntityCapacity: Int) {
 
     operator fun contains(listener: EntityListener) = listeners.contains(listener)
 
-    fun family(init: FamilyBuilder.() -> (Unit)) = FamilyBuilder(this, this.families).apply(init).build()
+    fun family(init: FamilyBuilder.() -> (Unit)) =
+        FamilyBuilder(this, entityComponents, this.families).apply(init).build()
 
     operator fun contains(family: Family) = families.contains(family)
 
