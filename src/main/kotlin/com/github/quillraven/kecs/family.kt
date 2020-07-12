@@ -69,7 +69,7 @@ data class Family(
     private val noneOf: BitSet,
     private val anyOf: BitSet
 ) : ComponentListener {
-    private val entities = BitSet(world.initialEntityCapacity)
+    val entities = BitSet(world.initialEntityCapacity)
 
     operator fun contains(entityID: Int): Boolean {
         val components = world.components(entityID)
@@ -109,7 +109,7 @@ data class Family(
         }
     }
 
-    fun iterate(action: (Int) -> Unit) {
+    inline fun iterate(action: (Int) -> Unit) {
         var entityID = entities.nextSetBit(0)
         while (entityID >= 0) {
             action(entityID)
