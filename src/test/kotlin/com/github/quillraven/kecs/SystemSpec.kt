@@ -21,7 +21,7 @@ object SystemSpec : Spek({
                 world.systems(iteratingSystem)
                 world.componentManager<TransformComponent>().register(entity1)
                 world.componentManager<TransformComponent>().register(entity2)
-                iteratingSystem.update(world, 1f)
+                iteratingSystem.update(1f)
             }
 
             it("should call updateEntity for each entity in the system") {

@@ -1,5 +1,6 @@
 package com.github.quillraven.kecs
 
+import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.ObjectSet
 import com.github.quillraven.kecs.component.PhysiqueComponent
 import com.github.quillraven.kecs.component.PlayerComponent
@@ -9,17 +10,19 @@ import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should be`
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.util.*
 
 @Suppress("unused")
 object FamilySpec : Spek({
     val familyCache by memoized { ObjectSet<Family>() }
+    val entityComponentsCache by memoized { Array<BitSet>() }
     val world by memoized { World(3) }
 
     describe("A FamilyBuilder") {
         describe("Creating a new family") {
             lateinit var family: Family
             beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
+                FamilyBuilder(world, entityComponentsCache, familyCache).run {
                     allOf(TransformComponent::class, RenderComponent::class)
                     noneOf(PlayerComponent::class)
                     anyOf(PhysiqueComponent::class)
@@ -43,13 +46,13 @@ object FamilySpec : Spek({
             lateinit var family1: Family
             lateinit var family2: Family
             beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
+                FamilyBuilder(world, entityComponentsCache, familyCache).run {
                     allOf(TransformComponent::class, RenderComponent::class)
                     noneOf(PlayerComponent::class)
                     anyOf(PhysiqueComponent::class)
                     family1 = build()
                 }
-                FamilyBuilder(world, familyCache).run {
+                FamilyBuilder(world, entityComponentsCache, familyCache).run {
                     allOf(TransformComponent::class, RenderComponent::class)
                     noneOf(PlayerComponent::class)
                     anyOf(PhysiqueComponent::class)
@@ -66,12 +69,12 @@ object FamilySpec : Spek({
             lateinit var family1: Family
             lateinit var family2: Family
             beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
+                FamilyBuilder(world, entityComponentsCache, familyCache).run {
                     allOf(TransformComponent::class)
                     anyOf(PhysiqueComponent::class)
                     family1 = build()
                 }
-                FamilyBuilder(world, familyCache).run {
+                FamilyBuilder(world, entityComponentsCache, familyCache).run {
                     noneOf(PlayerComponent::class)
                     family2 = build()
                 }
@@ -98,13 +101,12 @@ object FamilySpec : Spek({
             lateinit var family: Family
             var entityID = -1
             beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
+                entityID = world.entity()
+                family = world.family {
                     allOf(TransformComponent::class, RenderComponent::class)
                     noneOf(PlayerComponent::class)
                     anyOf(PhysiqueComponent::class)
-                    family = build()
                 }
-                entityID = world.entity()
                 world.componentManager<TransformComponent>().register(entityID)
                 world.componentManager<RenderComponent>().register(entityID)
                 world.componentManager<PhysiqueComponent>().register(entityID)
@@ -114,7 +116,7 @@ object FamilySpec : Spek({
             }
 
             it("should add the entity to the family") {
-                (entityID in family) `should be equal to` true
+                family.entities[entityID] `should be equal to` true
                 world.componentManager<TransformComponent>()[entityID].x `should be equal to` 1
             }
         }
@@ -124,11 +126,10 @@ object FamilySpec : Spek({
             var entityID1 = -1
             var entityID2 = -1
             beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
+                family = world.family {
                     allOf(TransformComponent::class, RenderComponent::class)
                     noneOf(PlayerComponent::class)
                     anyOf(PhysiqueComponent::class)
-                    family = build()
                 }
                 entityID1 = world.entity()
                 entityID2 = world.entity()
@@ -150,10 +151,10 @@ object FamilySpec : Spek({
             }
 
             it("should remove the entity from the family") {
-                (entityID1 in family) `should be equal to` false
+                family.entities[entityID1] `should be equal to` false
                 world.componentManager<TransformComponent>()[entityID1].x `should be equal to` 1
 
-                (entityID2 in family) `should be equal to` false
+                family.entities[entityID2] `should be equal to` false
                 world.componentManager<TransformComponent>()[entityID1].x `should be equal to` 1
             }
         }
@@ -162,11 +163,10 @@ object FamilySpec : Spek({
             lateinit var family: Family
             var entityID = -1
             beforeEachTest {
-                FamilyBuilder(world, familyCache).run {
+                family = world.family {
                     allOf(TransformComponent::class, RenderComponent::class)
                     noneOf(PlayerComponent::class)
                     anyOf(PhysiqueComponent::class)
-                    family = build()
                 }
                 entityID = world.entity()
                 world.componentManager<TransformComponent>().register(entityID)
