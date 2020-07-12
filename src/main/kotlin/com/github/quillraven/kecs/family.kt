@@ -67,18 +67,22 @@ data class Family(
     private val world: World,
     private val allOf: BitSet,
     private val noneOf: BitSet,
-    private val anyOf: BitSet
+    private val anyOf: BitSet,
+    private val checkAll: Boolean = allOf.cardinality() > 0,
+    private val checkNone: Boolean = noneOf.cardinality() > 0,
+    private val checkAny: Boolean = anyOf.cardinality() > 0
 ) : ComponentListener {
     val entities = BitSet(world.initialEntityCapacity)
 
-    operator fun contains(entityID: Int): Boolean {
+    private fun updateFamilyEntities(entityID: Int) {
         val components = world.components(entityID)
 
-        if (allOf.cardinality() > 0) {
+        if (checkAll) {
             var idx = allOf.nextSetBit(0)
             while (idx >= 0) {
                 if (!components[idx]) {
-                    return false
+                    entities.clear(entityID)
+                    return
                 }
 
                 if (idx == Integer.MAX_VALUE) {
@@ -88,26 +92,22 @@ data class Family(
             }
         }
 
-        if (noneOf.cardinality() > 0 && noneOf.intersects(components)) {
-            return false
-        }
-
-        if (anyOf.cardinality() > 0 && !anyOf.intersects(components)) {
-            return false
-        }
-
-        return true
-    }
-
-    override fun componentAdded(entityID: Int, manager: ComponentManager<*>) = componentRemoved(entityID, manager)
-
-    override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) {
-        if (entityID in this) {
-            entities.set(entityID)
-        } else {
+        if (checkNone && noneOf.intersects(components)) {
             entities.clear(entityID)
+            return
         }
+
+        if (checkAny && !anyOf.intersects(components)) {
+            entities.clear(entityID)
+            return
+        }
+
+        entities.set(entityID)
     }
+
+    override fun componentAdded(entityID: Int, manager: ComponentManager<*>) = updateFamilyEntities(entityID)
+
+    override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) = updateFamilyEntities(entityID)
 
     inline fun iterate(action: (Int) -> Unit) {
         var entityID = entities.nextSetBit(0)
