@@ -1,5 +1,6 @@
 package com.github.quillraven.kecs
 
+import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.ObjectSet
 import com.badlogic.gdx.utils.OrderedSet
 import java.util.*
@@ -11,6 +12,7 @@ annotation class FamilyDsl
 @FamilyDsl
 class FamilyBuilder(
     private val world: World,
+    private val entityComponents: Array<BitSet>,
     private val families: ObjectSet<Family>
 ) {
     private val allOf = OrderedSet<ComponentManager<*>>().apply {
@@ -51,7 +53,7 @@ class FamilyBuilder(
         val anyBitSet = BitSet().apply {
             anyOf.forEach { this.set(it.id) }
         }
-        val family = Family(world, allBitSet, noneBitSet, anyBitSet)
+        val family = Family(entityComponents, allBitSet, noneBitSet, anyBitSet)
         if (families.contains(family)) {
             return families.get(family)
         }
@@ -64,20 +66,17 @@ class FamilyBuilder(
 }
 
 data class Family(
-    private val world: World,
+    private val entityComponents: Array<BitSet>,
     private val allOf: BitSet,
     private val noneOf: BitSet,
-    private val anyOf: BitSet,
-    private val checkAll: Boolean = allOf.cardinality() > 0,
-    private val checkNone: Boolean = noneOf.cardinality() > 0,
-    private val checkAny: Boolean = anyOf.cardinality() > 0
+    private val anyOf: BitSet
 ) : ComponentListener {
-    val entities = BitSet(world.initialEntityCapacity)
+    val entities = BitSet(entityComponents.size)
 
     private fun updateFamilyEntities(entityID: Int) {
-        val components = world.components(entityID)
+        val components = entityComponents[entityID]
 
-        if (checkAll) {
+        if (!allOf.isEmpty) {
             var idx = allOf.nextSetBit(0)
             while (idx >= 0) {
                 if (!components[idx]) {
@@ -92,12 +91,12 @@ data class Family(
             }
         }
 
-        if (checkNone && noneOf.intersects(components)) {
+        if (!noneOf.isEmpty && noneOf.intersects(components)) {
             entities.clear(entityID)
             return
         }
 
-        if (checkAny && !anyOf.intersects(components)) {
+        if (!anyOf.isEmpty && !anyOf.intersects(components)) {
             entities.clear(entityID)
             return
         }
