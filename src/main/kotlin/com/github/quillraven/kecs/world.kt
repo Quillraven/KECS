@@ -31,9 +31,7 @@ class World(val initialEntityCapacity: Int) {
     private val listeners = OrderedSet<EntityListener>().apply {
         orderedItems().ordered = false
     }
-    private val systems = OrderedSet<System>().apply {
-        orderedItems().ordered = false
-    }
+    private val systems = Array<System>(false, 32)
     private val families = OrderedSet<Family>().apply {
         orderedItems().ordered = false
     }
@@ -109,7 +107,7 @@ class World(val initialEntityCapacity: Int) {
     fun update(deltaTime: Float) {
         systems.forEach { system ->
             if (system.active) {
-                system.update(this, deltaTime)
+                system.update(deltaTime)
             }
         }
     }

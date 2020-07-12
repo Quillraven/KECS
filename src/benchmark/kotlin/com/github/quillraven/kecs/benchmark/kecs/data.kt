@@ -26,7 +26,7 @@ class KECSIteratingSystemSimple(
 ) : com.github.quillraven.kecs.IteratingSystem(
     world.family { allOf(KECSComponent1::class) }
 ) {
-    override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
+    override fun updateEntity(entityID: Int, deltaTime: Float) {
         manager[entityID].x++
     }
 }
@@ -47,7 +47,7 @@ class KECSIteratingSystemComplex1(
 ) {
     private var updateEntityCalls = 0
 
-    override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
+    override fun updateEntity(entityID: Int, deltaTime: Float) {
         if (updateEntityCalls % 2 == 0) {
             manager1[entityID].x++
             manager2.register(entityID)
@@ -70,7 +70,7 @@ class KECSIteratingSystemComplex2(
         anyOf(KECSComponent1::class, KECSComponent2::class, KECSComponent3::class)
     }
 ) {
-    override fun updateEntity(world: World, entityID: Int, deltaTime: Float) {
+    override fun updateEntity(entityID: Int, deltaTime: Float) {
         manager2.deregister(entityID)
         manager1.register(entityID)
     }
