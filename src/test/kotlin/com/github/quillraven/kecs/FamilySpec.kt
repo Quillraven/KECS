@@ -116,7 +116,7 @@ object FamilySpec : Spek({
             }
 
             it("should add the entity to the family") {
-                family.entities[entityID] `should be equal to` true
+                family.activeIDs.contains(entityID) `should be equal to` true
                 world.componentManager<TransformComponent>()[entityID].x `should be equal to` 1
             }
         }
@@ -151,10 +151,10 @@ object FamilySpec : Spek({
             }
 
             it("should remove the entity from the family") {
-                family.entities[entityID1] `should be equal to` false
+                family.activeIDs.contains(entityID1) `should be equal to` false
                 world.componentManager<TransformComponent>()[entityID1].x `should be equal to` 1
 
-                family.entities[entityID2] `should be equal to` false
+                family.activeIDs.contains(entityID2) `should be equal to` false
                 world.componentManager<TransformComponent>()[entityID1].x `should be equal to` 1
             }
         }

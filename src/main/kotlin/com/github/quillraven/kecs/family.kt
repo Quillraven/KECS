@@ -1,6 +1,7 @@
 package com.github.quillraven.kecs
 
 import com.badlogic.gdx.utils.Array
+import com.badlogic.gdx.utils.IntArray
 import com.badlogic.gdx.utils.ObjectSet
 import com.badlogic.gdx.utils.OrderedSet
 import java.util.*
@@ -71,52 +72,63 @@ data class Family(
     private val noneOf: BitSet,
     private val anyOf: BitSet
 ) : ComponentListener {
-    val entities = BitSet(entityComponents.size)
+    private val allOfIds = IntArray(false, allOf.cardinality()).apply {
+        var idx = allOf.nextSetBit(0)
+        while (idx >= 0) {
+            add(idx)
+            if (idx == Integer.MAX_VALUE) {
+                break // or (idx+1) would overflow
+            }
+            idx = allOf.nextSetBit(idx + 1)
+        }
+    }
+    val entitiesToUpdate = BitSet(entityComponents.size)
+    val activeIDs = IntArray(false, entityComponents.size)
 
-    private fun updateFamilyEntities(entityID: Int) {
+    operator fun contains(entityID: Int): Boolean {
         val components = entityComponents[entityID]
 
         if (!allOf.isEmpty) {
-            var idx = allOf.nextSetBit(0)
-            while (idx >= 0) {
-                if (!components[idx]) {
-                    entities.clear(entityID)
-                    return
+            for (i in 0 until allOfIds.size) {
+                if (!components[allOfIds[i]]) {
+                    return false
                 }
-
-                if (idx == Integer.MAX_VALUE) {
-                    break // or (idx+1) would overflow
-                }
-                idx = allOf.nextSetBit(idx + 1)
             }
         }
 
-        if (!noneOf.isEmpty && noneOf.intersects(components)) {
-            entities.clear(entityID)
-            return
-        }
-
-        if (!anyOf.isEmpty && !anyOf.intersects(components)) {
-            entities.clear(entityID)
-            return
-        }
-
-        entities.set(entityID)
+        return (noneOf.isEmpty || !noneOf.intersects(components))
+                && (anyOf.isEmpty || anyOf.intersects(components))
     }
 
-    override fun componentAdded(entityID: Int, manager: ComponentManager<*>) = updateFamilyEntities(entityID)
+    override fun componentAdded(entityID: Int, manager: ComponentManager<*>) = entitiesToUpdate.set(entityID)
 
-    override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) = updateFamilyEntities(entityID)
+    override fun componentRemoved(entityID: Int, manager: ComponentManager<*>) = entitiesToUpdate.set(entityID)
 
     inline fun iterate(action: (Int) -> Unit) {
-        var entityID = entities.nextSetBit(0)
-        while (entityID >= 0) {
-            action(entityID)
-
-            if (entityID == Integer.MAX_VALUE) {
-                break // or (entityID+1) would overflow
+        if (!entitiesToUpdate.isEmpty) {
+            // entity component configuration changes -> evaluate once more which entities belong to the family
+            // Note: it is faster to simply rebuild the active IDs from scratch instead of updating them
+            for (i in 0 until activeIDs.size) {
+                entitiesToUpdate.set(activeIDs[i])
             }
-            entityID = entities.nextSetBit(entityID + 1)
+            activeIDs.clear()
+            var entityID = entitiesToUpdate.nextSetBit(0)
+            while (entityID >= 0) {
+                if (entityID in this) {
+                    activeIDs.add(entityID)
+                }
+
+                if (entityID == Integer.MAX_VALUE) {
+                    break // or (entityID+1) would overflow
+                }
+                entityID = entitiesToUpdate.nextSetBit(entityID + 1)
+            }
+            entitiesToUpdate.clear()
+        }
+
+        // execute the action for all entities of the family
+        for (i in 0 until activeIDs.size) {
+            action(activeIDs[i])
         }
     }
 }
