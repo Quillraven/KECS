@@ -40,7 +40,7 @@ class World(private val initialEntityCapacity: Int) {
         val entity = when {
             freeIDs.isEmpty -> {
                 if (nextEntityID >= entities.size) {
-                    // initial  entity capacity exceeded -> resize by 75%
+                    // initial entity capacity exceeded -> resize by 75%
                     repeat(max(1, (nextEntityID * 0.75f).toInt())) {
                         entities.add(-1)
                         entityComponents.add(null)
